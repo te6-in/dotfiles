@@ -1,0 +1,2 @@
+# Default Notion database id consumed by ~/.claude/instructions/notion.md
+set -gx NOTION_DEFAULT_DATABASE_ID XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

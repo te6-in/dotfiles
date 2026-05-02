@@ -1,0 +1,12 @@
+@instructions/tone.md
+@instructions/expensive-commands.md
+@instructions/1password.md
+@instructions/github-cli.md
+@instructions/model-name.md
+@instructions/linear.md
+@instructions/notion.md
+@instructions/cmux.md
+@instructions/asking-the-user.md
+@instructions/package-json-dependencies.md
+@instructions/shell-file-edits.md
+@instructions/code-style.md

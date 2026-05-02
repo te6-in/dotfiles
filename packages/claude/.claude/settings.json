@@ -1,0 +1,138 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(trash:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote:*)",
+      "Bash(git blame:*)",
+      "Bash(git stash list:*)",
+      "Bash(npm view:*)",
+      "Bash(npm why:*)",
+      "Bash(npm list:*)",
+      "Bash(npm outdated:*)",
+      "Bash(pnpm view:*)",
+      "Bash(pnpm why:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm outdated:*)",
+      "Bash(yarn info:*)",
+      "Bash(yarn why:*)",
+      "Bash(yarn outdated:*)",
+      "Bash(yarn list:*)",
+      "Bash(bun info:*)",
+      "Bash(bun why:*)",
+      "Bash(bun list:*)",
+      "Bash(bun outdated:*)",
+      "Bash(bun tsc --noEmit:*)",
+      "Bash(cmux rename-workspace:*)",
+      "mcp__ide__getDiagnostics",
+      "mcp__chrome-devtools",
+      "mcp__claude_ai_Linear__get_attachment",
+      "mcp__claude_ai_Linear__get_document",
+      "mcp__claude_ai_Linear__get_issue_status",
+      "mcp__claude_ai_Linear__get_issue",
+      "mcp__claude_ai_Linear__get_project",
+      "mcp__claude_ai_Linear__get_team",
+      "mcp__claude_ai_Linear__get_user",
+      "mcp__claude_ai_Linear__list_comments",
+      "mcp__claude_ai_Linear__list_cycles",
+      "mcp__claude_ai_Linear__list_documents",
+      "mcp__claude_ai_Linear__list_issue_statuses",
+      "mcp__claude_ai_Linear__list_issue_labels",
+      "mcp__claude_ai_Linear__list_issues",
+      "mcp__claude_ai_Linear__list_projects",
+      "mcp__claude_ai_Linear__list_teams",
+      "mcp__claude_ai_Linear__save_issue",
+      "mcp__claude_ai_Linear__save_comment",
+      "mcp__plugin_Notion_notion__notion-fetch",
+      "mcp__plugin_slack_slack__slack_read_thread",
+      "mcp__plugin_slack_slack__slack_search_public",
+      "WebSearch"
+    ],
+    "deny": [
+      "Read(**/*.secret)",
+      "Read(**/*.secret.*)"
+    ],
+    "ask": [
+      "Read(**/.env)",
+      "Read(**/.env.*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/rewrite-rm-to-trash.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/block-lockfile-edits.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__plugin_slack_slack__slack_send_message",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/auto-approve-slack-self-dm.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "/opt/homebrew/bin/starship statusline claude-code"
+  },
+  "enabledMcpjsonServers": [
+    "seed-design-figma",
+    "seed-design-docs"
+  ],
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "explanatory-output-style@claude-plugins-official": true,
+    "notion@claude-plugins-official": true,
+    "slack@claude-plugins-official": true
+  },
+  "language": "the language of the user's most recent message",
+  "feedbackSurveyRate": 0,
+  "effortLevel": "xhigh",
+  "showThinkingSummaries": true,
+  "theme": "custom:material-darker-stone",
+  "preferredNotifChannel": "ghostty",
+  "autoCompactEnabled": false,
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "awaySummaryEnabled": false
+}

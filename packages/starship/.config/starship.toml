@@ -1,0 +1,286 @@
+'$schema' = 'https://starship.rs/config-schema.json'
+
+palette = 'dark'
+
+format = '''[─ ](separator)$directory$fill$cmd_duration$battery
+$container$git_branch$git_state$git_metrics$username$sudo$character'''
+
+right_format = '$package$mise$nodejs$bun$deno$docker_context'
+
+[palettes.dark]
+# paths
+path = '#00B8DB'
+path-parent = '#007595'
+path-root = '#00D3F3'
+# structure
+separator = '#44403C'
+# neutrals
+muted = '#79716C'
+muted-soft = '#A6A09B'
+# semantics
+critical = '#E8000A'
+error = '#FB2C36'
+success = '#00BD7D'
+success-dark = '#008236'
+battery-ok = '#00A73E'
+warning = '#FDC800'
+info = '#7DCF00'
+# accents
+accent = '#4F39F7'
+accent-soft = '#8E51FF'
+identifier = '#90A2B9'
+identifier-dark = '#63748F'
+brand-pink = '#FEA5D5'
+
+[directory]
+style = 'path'
+read_only = ''
+read_only_style = 'critical'
+before_repo_root_style = 'path-parent'
+repo_root_style = 'bold path-root'
+truncate_to_repo = false
+truncation_length = 5
+fish_style_pwd_dir_length = 4
+
+[fill]
+symbol = '─'
+style = 'separator'
+
+[cmd_duration]
+format = ' [$duration]($style)'
+style = 'muted'
+min_time = 1_000
+
+[battery]
+format = ' [$symbol$percentage]($style)'
+[[battery.display]]
+style = 'bold critical'
+[[battery.display]]
+threshold = 50
+style = 'bold battery-ok'
+
+#####################################
+
+[container]
+format = '[$symbol $name]($style) '
+style = 'bold accent'
+
+[git_branch]
+format = '[$symbol$branch(:$remote_branch)]($style) '
+symbol = ''
+truncation_length = 16
+style = 'identifier'
+
+[git_state]
+format = '[$state( $progress_current/$progress_total)]($style) '
+style = 'bold muted'
+rebase = 'rebasing'
+merge = 'merging'
+revert = 'reverting'
+cherry_pick = 'cherry-picking'
+am = 'am'
+am_or_rebase = 'am/rebasing'
+bisect = 'bisecting'
+
+[git_metrics]
+# disabled = false
+disabled = true
+format = '([+$added]($added_style) )([-$deleted]($deleted_style) )'
+added_style = 'success'
+deleted_style = 'error'
+ignore_submodules = true
+
+[username]
+format = '[as $user ]($style)'
+style_root = 'accent'
+
+[sudo]
+disabled = false
+format = '[with sudo ]($style)'
+style = 'bold error'
+
+[character]
+success_symbol = '[❯](bold success)'
+error_symbol = '[❯](bold error)'
+
+#####################################
+
+[package]
+format = '[ $symbol$version]($style)'
+symbol = ''
+version_format = '${raw}'
+style = 'muted'
+
+[mise]
+disabled = false
+format = '[ $symbol$health]($style)'
+style = 'accent-soft'
+
+[nodejs]
+format = '[ $symbol ($version)]($style)'
+symbol = 'Node.js'
+style = 'success-dark'
+version_format = '${raw}'
+
+[bun]
+format = '[ $symbol ($version)]($style)'
+symbol = 'Bun'
+style = 'brand-pink'
+version_format = '${raw}'
+
+[deno]
+format = '[ $symbol ($version)]($style)'
+symbol = 'Deno'
+style = 'identifier-dark'
+version_format = '${raw}'
+
+[docker_context]
+format = '[ $symbol $context]($style)'
+symbol = '⬢'
+
+#####################################
+
+[profiles]
+claude-code = '''$directory$git_branch$git_state
+$claude_context$claude_model$claude_cost'''
+
+[claude_model]
+symbol = ''
+style = 'muted-soft'
+
+[claude_model.model_aliases]
+# Latest (1M context variant has [1m] suffix in Claude Code)
+"claude-opus-4-7[1m]" = "Opus 4.7 1M"
+"claude-opus-4-7" = "Opus 4.7"
+"claude-sonnet-4-6[1m]" = "Sonnet 4.6 1M"
+"claude-sonnet-4-6" = "Sonnet 4.6"
+"claude-haiku-4-5-20251001" = "Haiku 4.5"
+"claude-haiku-4-5" = "Haiku 4.5"
+
+# Legacy (still available)
+"claude-opus-4-6" = "Opus 4.6"
+"claude-sonnet-4-5-20250929" = "Sonnet 4.5"
+"claude-sonnet-4-5" = "Sonnet 4.5"
+"claude-opus-4-5-20251101" = "Opus 4.5"
+"claude-opus-4-5" = "Opus 4.5"
+"claude-opus-4-1-20250805" = "Opus 4.1"
+"claude-opus-4-1" = "Opus 4.1"
+
+[claude_cost]
+symbol = ''
+
+[[claude_cost.display]]
+threshold = 0.0
+hidden = true
+
+[[claude_cost.display]]
+threshold = 0.001
+style = 'muted'
+hidden = false
+
+[claude_context]
+gauge_width = 7
+
+[[claude_context.display]]
+threshold = 0.0
+hidden = true
+
+[[claude_context.display]]
+threshold = 0.01
+style = 'success'
+hidden = false
+
+[[claude_context.display]]
+threshold = 5.0
+style = '#10B981'
+hidden = false
+
+[[claude_context.display]]
+threshold = 10.0
+style = '#22C55E'
+hidden = false
+
+[[claude_context.display]]
+threshold = 15.0
+style = '#65D932'
+hidden = false
+
+[[claude_context.display]]
+threshold = 20.0
+style = '#84CC16'
+hidden = false
+
+[[claude_context.display]]
+threshold = 25.0
+style = 'info'
+hidden = false
+
+[[claude_context.display]]
+threshold = 30.0
+style = '#C0DD2C'
+hidden = false
+
+[[claude_context.display]]
+threshold = 35.0
+style = '#E5D617'
+hidden = false
+
+[[claude_context.display]]
+threshold = 40.0
+style = 'warning'
+hidden = false
+
+[[claude_context.display]]
+threshold = 45.0
+style = '#F0A500'
+hidden = false
+
+[[claude_context.display]]
+threshold = 50.0
+style = '#F59E0B'
+hidden = false
+
+[[claude_context.display]]
+threshold = 55.0
+style = '#F97316'
+hidden = false
+
+[[claude_context.display]]
+threshold = 60.0
+style = '#EA580C'
+hidden = false
+
+[[claude_context.display]]
+threshold = 65.0
+style = '#E14B26'
+hidden = false
+
+[[claude_context.display]]
+threshold = 70.0
+style = 'error'
+hidden = false
+
+[[claude_context.display]]
+threshold = 75.0
+style = '#DC2626'
+hidden = false
+
+[[claude_context.display]]
+threshold = 80.0
+style = 'critical'
+hidden = false
+
+[[claude_context.display]]
+threshold = 85.0
+style = 'bold #B91C1C'
+hidden = false
+
+[[claude_context.display]]
+threshold = 90.0
+style = 'bold #9F1239'
+hidden = false
+
+[[claude_context.display]]
+threshold = 95.0
+style = 'bold #881337'
+hidden = false

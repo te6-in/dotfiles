@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "seed-design-figma": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["-y", "@seed-design/mcp@latest"],
+      "env": {
+        "FIGMA_PERSONAL_ACCESS_TOKEN": "${FIGMA_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "seed-design-docs": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["-y", "@seed-design/docs-mcp@latest"]
+    },
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    }
+  }
+}

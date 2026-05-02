@@ -1,0 +1,11 @@
+.DS_Store
+
+*.local
+*.local.*
+*.secret
+*.secret.*
+!*.example
+
+# ~/.config/karabiner should be symlinked as a whole
+# see: https://karabiner-elements.pqrs.org/docs/manual/misc/configuration-file-path/
+packages/karabiner/.config/karabiner/automatic_backups

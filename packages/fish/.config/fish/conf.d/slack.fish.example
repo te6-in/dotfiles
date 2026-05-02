@@ -1,0 +1,3 @@
+# Slack identifiers consumed by Claude Code's slack_send_message hook (settings.json)
+set -gx SLACK_SELF_USER_ID UXXXXXXXXXX
+set -gx SLACK_SELF_DM_CHANNEL_ID DXXXXXXXXXX

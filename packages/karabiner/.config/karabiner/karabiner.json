@@ -1,0 +1,389 @@
+{
+    "profiles": [
+        {
+            "complex_modifications": {
+                "rules": [
+                    {
+                        "description": "cmd/option(+shift)+q only triggers when held",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "q",
+                                    "modifiers": { "mandatory": ["command"] }
+                                },
+                                "to_if_held_down": {
+                                    "key_code": "q",
+                                    "modifiers": ["left_command"],
+                                    "repeat": false
+                                },
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "q",
+                                    "modifiers": { "mandatory": ["command", "shift"] }
+                                },
+                                "to_if_held_down": {
+                                    "key_code": "q",
+                                    "modifiers": ["left_command", "left_shift"],
+                                    "repeat": false
+                                },
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "q",
+                                    "modifiers": { "mandatory": ["option"] }
+                                },
+                                "to_if_held_down": {
+                                    "key_code": "q",
+                                    "modifiers": ["left_option"],
+                                    "repeat": false
+                                },
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "q",
+                                    "modifiers": { "mandatory": ["option", "shift"] }
+                                },
+                                "to_if_held_down": {
+                                    "key_code": "q",
+                                    "modifiers": ["left_option", "left_shift"],
+                                    "repeat": false
+                                },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "right cmd → f13 / held → f18",
+                        "manipulators": [
+                            {
+                                "from": { "key_code": "right_command" },
+                                "parameters": { "basic.to_if_held_down_threshold_milliseconds": 200 },
+                                "to": { "key_code": "f13" },
+                                "to_if_held_down": { "key_code": "f18" },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "fn → f14",
+                        "manipulators": [
+                            {
+                                "from": { "key_code": "fn" },
+                                "to": { "key_code": "f14" },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "` → option+control+` (always backtick regardless of input source)",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.utmapp\\.UTM$"
+                                        ],
+                                        "type": "frontmost_application_unless"
+                                    }
+                                ],
+                                "from": { "key_code": "grave_accent_and_tilde" },
+                                "to": {
+                                    "key_code": "grave_accent_and_tilde",
+                                    "modifiers": ["control", "option"]
+                                },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "swap ; and :",
+                        "manipulators": [
+                            {
+                                "from": { "key_code": "semicolon" },
+                                "to": {
+                                    "key_code": "semicolon",
+                                    "modifiers": ["left_shift"]
+                                },
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "semicolon",
+                                    "modifiers": { "mandatory": ["shift"] }
+                                },
+                                "to": { "key_code": "semicolon" },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "swap \\ and |",
+                        "manipulators": [
+                            {
+                                "from": { "key_code": "backslash" },
+                                "to": {
+                                    "key_code": "backslash",
+                                    "modifiers": ["left_shift"]
+                                },
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "backslash",
+                                    "modifiers": { "mandatory": ["shift"] }
+                                },
+                                "to": { "key_code": "backslash" },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "right option → hyper (lazy)",
+                        "manipulators": [
+                            {
+                                "from": { "key_code": "right_option" },
+                                "to": {
+                                    "key_code": "left_command",
+                                    "lazy": true,
+                                    "modifiers": ["left_shift", "left_option", "left_control"]
+                                },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "disable macOS default hyper-key shortcuts (map to f15-17, f19-20)",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "q",
+                                    "modifiers": { "mandatory": ["command", "control", "option", "shift"] }
+                                },
+                                "to": { "key_code": "f15" },
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "period",
+                                    "modifiers": { "mandatory": ["command", "control", "option", "shift"] }
+                                },
+                                "to": { "key_code": "f16" },
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "slash",
+                                    "modifiers": { "mandatory": ["command", "control", "option", "shift"] }
+                                },
+                                "to": { "key_code": "f17" },
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "comma",
+                                    "modifiers": { "mandatory": ["command", "control", "option", "shift"] }
+                                },
+                                "to": { "key_code": "f19" },
+                                "type": "basic"
+                            },
+                            {
+                                "from": {
+                                    "key_code": "delete_or_backspace",
+                                    "modifiers": { "mandatory": ["command", "control", "option", "shift"] }
+                                },
+                                "to": { "key_code": "f20" },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "f3 → control+tab / f4 → control+shift+tab",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.apple\\.iCal$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": { "key_code": "f3" },
+                                "to": {
+                                    "key_code": "left_arrow",
+                                    "modifiers": ["command"]
+                                },
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.apple\\.iCal$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": { "key_code": "f4" },
+                                "to": {
+                                    "key_code": "right_arrow",
+                                    "modifiers": ["command"]
+                                },
+                                "type": "basic"
+                            },
+                            {
+                                "from": { "key_code": "f3" },
+                                "to": {
+                                    "key_code": "tab",
+                                    "modifiers": ["left_control", "left_shift"]
+                                },
+                                "type": "basic"
+                            },
+                            {
+                                "from": { "key_code": "f4" },
+                                "to": {
+                                    "key_code": "tab",
+                                    "modifiers": ["left_control"]
+                                },
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "f5, f6 → custom per frontmost app",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.DanPristupov\\.Fork$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": { "key_code": "f5" },
+                                "to": {
+                                    "key_code": "1",
+                                    "modifiers": ["command"]
+                                },
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.DanPristupov\\.Fork$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": { "key_code": "f6" },
+                                "to": {
+                                    "key_code": "2",
+                                    "modifiers": ["command"]
+                                },
+                                "type": "basic"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "devices": [
+                {
+                    "identifiers": { "is_keyboard": true },
+                    "manipulate_caps_lock_led": false
+                }
+            ],
+            "fn_function_keys": [
+                {
+                    "from": { "key_code": "f1" },
+                    "to": [{ "key_code": "f1" }]
+                },
+                {
+                    "from": { "key_code": "f2" },
+                    "to": [{ "key_code": "f2" }]
+                },
+                {
+                    "from": { "key_code": "f3" },
+                    "to": [{ "key_code": "f3" }]
+                },
+                {
+                    "from": { "key_code": "f4" },
+                    "to": [{ "key_code": "f4" }]
+                },
+                {
+                    "from": { "key_code": "f5" },
+                    "to": [{ "key_code": "f5" }]
+                },
+                {
+                    "from": { "key_code": "f6" },
+                    "to": [{ "key_code": "f6" }]
+                },
+                {
+                    "from": { "key_code": "f7" },
+                    "to": [{ "key_code": "f7" }]
+                },
+                {
+                    "from": { "key_code": "f8" },
+                    "to": [{ "key_code": "f8" }]
+                },
+                {
+                    "from": { "key_code": "f9" },
+                    "to": [{ "key_code": "f9" }]
+                },
+                {
+                    "from": { "key_code": "f10" },
+                    "to": [{ "key_code": "f10" }]
+                },
+                {
+                    "from": { "key_code": "f11" },
+                    "to": [{ "key_code": "f11" }]
+                },
+                {
+                    "from": { "key_code": "f12" },
+                    "to": [{ "key_code": "f12" }]
+                }
+            ],
+            "name": "default",
+            "selected": true,
+            "simple_modifications": [
+                {
+                    "from": { "key_code": "caps_lock" },
+                    "to": [{ "key_code": "delete_forward" }]
+                },
+                {
+                    "from": { "key_code": "f7" },
+                    "to": [{ "consumer_key_code": "rewind" }]
+                },
+                {
+                    "from": { "key_code": "f8" },
+                    "to": [{ "consumer_key_code": "play_or_pause" }]
+                },
+                {
+                    "from": { "key_code": "f9" },
+                    "to": [{ "consumer_key_code": "fast_forward" }]
+                },
+                {
+                    "from": { "key_code": "f10" },
+                    "to": [{ "consumer_key_code": "mute" }]
+                },
+                {
+                    "from": { "key_code": "f11" },
+                    "to": [{ "consumer_key_code": "volume_decrement" }]
+                },
+                {
+                    "from": { "key_code": "f12" },
+                    "to": [{ "consumer_key_code": "volume_increment" }]
+                }
+            ],
+            "virtual_hid_keyboard": {
+                "country_code": 0,
+                "keyboard_type_v2": "ansi"
+            }
+        }
+    ]
+}

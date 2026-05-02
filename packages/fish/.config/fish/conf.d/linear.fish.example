@@ -1,0 +1,2 @@
+# Default Linear team key consumed by ~/.claude/instructions/linear.md
+set -gx LINEAR_DEFAULT_TEAM_KEY XXX
