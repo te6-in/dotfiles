@@ -12,4 +12,4 @@ quit-after-last-window-closed=true
 
 keybind = alt+backspace=text:\x17
 
-theme = material-darker-stone
+theme = material-stone-dark

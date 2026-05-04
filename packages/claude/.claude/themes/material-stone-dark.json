@@ -1,5 +1,5 @@
 {
-  "name": "material-darker-stone",
+  "name": "material-stone-dark",
   "base": "dark",
   "overrides": {
     "text": "#E7E5E4",

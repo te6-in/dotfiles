@@ -128,7 +128,7 @@
   "feedbackSurveyRate": 0,
   "effortLevel": "xhigh",
   "showThinkingSummaries": true,
-  "theme": "custom:material-darker-stone",
+  "theme": "custom:material-stone-dark",
   "preferredNotifChannel": "ghostty",
   "autoCompactEnabled": false,
   "remoteControlAtStartup": true,

@@ -44,7 +44,7 @@ Fish abbreviations expand inline to the real `xcrun` / `adb` command, so the URL
 
 ## Warm-dark, agent and terminal
 
-`material-darker-stone` covers Ghostty(cmux), Fish, and Claude Code. One palette either side of the agent boundary.
+`material-stone-dark` covers Ghostty(cmux), Fish, and Claude Code. One palette either side of the agent boundary.
 
 ## Bootstrap
 
