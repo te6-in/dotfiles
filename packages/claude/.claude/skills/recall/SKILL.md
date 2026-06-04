@@ -1,11 +1,15 @@
 ---
 name: recall
 description: Find past Claude Code sessions that discussed a given topic. Returns a summary of the matched conversation plus commands to jump back into that session. Invoke when the user asks you to "find", "recall", or "search" something from previous sessions, or says they vaguely remember talking about X and want to get back to it.
+context: fork
+agent: Explore
 ---
 
-`${args}` is the topic, question, or context the user wants to recall from a past conversation. Examples: "Reshaped margin implementation research", "ABC-1234" (a Linear issue), "discussion about Figma integration".
+`$ARGUMENTS` is the topic, question, or context the user wants to recall from a past conversation. Examples: "Reshaped margin implementation research", "ABC-1234" (a Linear issue), "discussion about Figma integration".
 
 Your job: find the related past session(s) in local Claude Code session storage and report back **a summary + the session file path + a CLI command to resume** for every matching session.
+
+This skill runs in a forked subagent (`context: fork`): you have no access to the main conversation, and only your final message returns to it. Everything you need is `$ARGUMENTS` plus the session files on disk. Do the noisy `grep`/parse work here and return only the ranked digest — that isolation is exactly what keeps the main session's context clean. Note your Bash tool calls start in the user's current working directory (the fork inherits it), but `cd` doesn't persist between calls, so keep each search command self-contained.
 
 ## Storage layout
 
