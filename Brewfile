@@ -6,6 +6,7 @@ cask "cmux"
 tap "oven-sh/bun"
 brew "oven-sh/bun/bun"
 
+brew "chrome-devtools-mcp"
 brew "cloudflare-wrangler"
 brew "deno"
 brew "direnv"

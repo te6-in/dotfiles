@@ -15,8 +15,18 @@
     },
     "chrome-devtools": {
       "type": "stdio",
+      "command": "chrome-devtools-mcp",
+      "args": ["--isolated", "--headless"]
+    },
+    "firefox-devtools": {
+      "type": "stdio",
       "command": "bunx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
+      "args": ["-y", "firefox-devtools-mcp@latest", "--headless", "--enable-script"]
+    },
+    "ios-simulator": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["-y", "ios-simulator-mcp@latest"]
     }
   }
 }
