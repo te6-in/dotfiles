@@ -8,6 +8,7 @@ brew "oven-sh/bun/bun"
 
 brew "cloudflare-wrangler"
 brew "deno"
+brew "direnv"
 brew "ffmpeg"
 brew "fish"
 brew "fnm"

@@ -16,3 +16,6 @@ source $brew_shellenv_cache
 
 # fnm needs to find homebrew first
 fnm env --use-on-cd --log-level=quiet --shell fish | source
+
+# direnv as well
+direnv hook fish | source

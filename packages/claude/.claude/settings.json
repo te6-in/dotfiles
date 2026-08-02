@@ -171,6 +171,26 @@
         ]
       }
     ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/direnv-load.sh"
+          }
+        ]
+      }
+    ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/direnv-load.sh"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "PushNotification",
