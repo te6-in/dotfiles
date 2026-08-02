@@ -148,6 +148,14 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$HOME/.claude/hooks/sync-theme.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "$HOME/.claude/hooks/notify-on-stop.sh"
           }
         ]
@@ -189,7 +197,7 @@
   "feedbackSurveyRate": 0,
   "effortLevel": "xhigh",
   "showThinkingSummaries": true,
-  "theme": "custom:material-stone-dark",
+  "theme": "custom:material-stone",
   "preferredNotifChannel": "ghostty",
   "autoCompactEnabled": false,
   "remoteControlAtStartup": true,
