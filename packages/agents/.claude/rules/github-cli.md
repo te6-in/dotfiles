@@ -1,0 +1,1 @@
+../../.agents/rules/github-cli.md

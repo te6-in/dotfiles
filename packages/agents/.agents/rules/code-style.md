@@ -1,3 +1,10 @@
+---
+description: JavaScript, TypeScript, and React code style conventions.
+paths: ["**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,vue,svelte,astro,mdx}"]
+trigger: glob
+glob: "**/*.ts, **/*.tsx, **/*.mts, **/*.cts, **/*.js, **/*.jsx, **/*.mjs, **/*.cjs, **/*.vue, **/*.svelte, **/*.astro, **/*.mdx"
+---
+
 # Code Style
 
 ## JavaScript Syntax
@@ -301,7 +308,7 @@ Doesn't apply to: order-carrying business data (priority lists, render order, us
 
 ## TypeScript
 
-These are general preferences for TS code. "Scope" tags indicate where each applies — some are looser in scripts/CLIs where bundle size doesn't matter.
+These are general preferences for TS code. Every rule below is Scope: everywhere unless tagged otherwise — a few are looser in scripts/CLIs where bundle size doesn't matter.
 
 ### `as const` + `satisfies` for literal constants
 
@@ -323,8 +330,6 @@ const MAP = {
 const SIZES: Array<{ min: number; scale: string }> = [ ... ];
 ```
 
-Scope: everywhere.
-
 ### Derive types from values, not the other way around
 
 Don't redeclare what the compiler can infer. Use `typeof`, `T["key"]`, `ReturnType<typeof fn>`, and `z.infer<typeof schema>` to keep types tied to a single source of truth.
@@ -343,8 +348,6 @@ type Opts = z.infer<typeof optSchema>;
 type Tone = "brand" | "neutral" | "critical";
 const tones: Tone[] = ["brand", "neutral", "critical"];
 ```
-
-Scope: everywhere.
 
 ### Don't annotate return types unless the annotation does real work
 
@@ -386,8 +389,6 @@ function computeSize(input: Input): Size {
 }
 ```
 
-Scope: everywhere.
-
 ### Don't re-annotate what contextual typing already provides
 
 When you pass a callback into a function/prop whose parameter type is already known — event handlers, array methods, typed option callbacks — leave the parameters untyped. TypeScript's contextual typing applies the correct, most specific type automatically. Re-annotating is redundant at best and silently widens/narrows the type at worst.
@@ -410,8 +411,6 @@ items.map((item: Item) => item.id);
 
 Only annotate when you genuinely can't get the type from context — e.g., a standalone function defined elsewhere that'll later be passed in.
 
-Scope: everywhere.
-
 ### Chain utility types instead of hand-writing derived shapes
 
 When a type exists nearby, reach for `NonNullable`, `Exclude`, `Pick`, `Omit`, `Parameters`, `ReturnType`, `ConstructorParameters`, and indexed access to carve it into the shape you need. This keeps the derived type in lockstep with the source.
@@ -425,8 +424,6 @@ type AccessibilityOpts = NonNullable<ConstructorParameters<typeof Accessibility>
 // ❌ Avoid — manually restating what the source type already knows
 type CloseReason = "closeButton" | "escapeKeyDown" | "interactOutside";
 ```
-
-Scope: everywhere.
 
 ### XOR fields via discriminated union with `?: never`
 
@@ -445,8 +442,6 @@ interface AuthOptions {
 }
 ```
 
-Scope: everywhere.
-
 ### Avoid `!` non-null assertion
 
 Use a guard, an early throw, or `?? fallback` instead. `!` silently swallows a bug the day the invariant breaks.
@@ -463,8 +458,6 @@ const value = map.get(key) ?? [];
 // ❌
 map.get(key)!.push(x);
 ```
-
-Scope: everywhere.
 
 ### Avoid `any` / `as unknown` — ask before using, report if already used
 
@@ -483,8 +476,6 @@ When the user has approved it, disable the lint rule inline with a specific reas
 const x = value as unknown as SomeType;
 const y: any = whatever;
 ```
-
-Scope: everywhere.
 
 ### `ts-pattern` `match().with().exhaustive()` — scripts only
 

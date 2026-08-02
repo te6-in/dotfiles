@@ -1,0 +1,1 @@
+../../.agents/rules/expensive-commands.md

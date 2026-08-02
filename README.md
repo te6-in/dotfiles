@@ -31,6 +31,45 @@ Decisions, state changes, and findings move out of the private chat onto surface
 - `/notion` promotes durable findings to a default Notion page.
 - Slack self-DMs are pre-approved for quick notes.
 
+## One set of instructions, two agents
+
+Anything that holds regardless of which agent is running — skills and standing instructions alike — lives once in `packages/agents/` and is written harness-neutral: it says "ask the user", not the name of one harness's prompt tool. The package projects that single copy into each agent's expected path with symlinks, so both read the same file and an edit lands everywhere at once:
+
+```
+packages/agents/
+├─ .agents/skills/<name>/        # the actual files
+├─ .agents/rules/<name>.md       #  ″
+├─ .claude/skills/<name>         # → ../../.agents/skills/<name>
+├─ .claude/rules/<name>.md       # → ../../.agents/rules/<name>.md
+├─ .gemini/config/skills/<name>  # → ../../../.agents/skills/<name>
+└─ .gemini/config/rules/<name>.md
+```
+
+One frontmatter serves both, because each ignores the other's keys. Claude Code scopes a rule with `paths:` and loads it unconditionally when that key is absent; `agy` needs an explicit `trigger:` and scopes with `glob:`:
+
+```yaml
+---
+description: JavaScript, TypeScript, and React code style conventions.
+paths: ["**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,vue,svelte,astro,mdx}"]
+trigger: glob
+glob: "**/*.ts, **/*.tsx, **/*.mts, **/*.cts, **/*.js, **/*.jsx, **/*.mjs, **/*.cjs, **/*.vue, **/*.svelte, **/*.astro, **/*.mdx"
+---
+```
+
+Write a `description` that says what the file *governs*, not what it says, so it survives edits to the body. For `trigger: model_decision` the description is the only thing the model sees up front, so there it has to carry the "when does this apply" on its own.
+
+Both agents also honor `disable-model-invocation`, so a `/`-only skill stays `/`-only in both.
+
+What can't be neutral stays in `packages/claude/`. The skills: `recall` and `recap` parse Claude Code's own JSONL transcripts, and the Linear/Notion ones need MCP servers only Claude Code has. The instructions: `asking-the-user`, `notion`, and `model-name` each name a Claude Code tool or setting outright. Those are the adapter layer — the neutral rules say "ask the user", these say which tool that means here. They stay `@`-imported from `CLAUDE.md`; the neutral ones must **not** be, or they load twice.
+
+Gotchas worth remembering, all found the hard way:
+
+- **`agy` needs an absolute path.** Its `skills.json` documents `~/`-relative entries, but the CLI rejects them (`path is not absolute`). Linking into `~/.gemini/config/`, its global discovery directory, sidesteps the config file entirely and ranks higher in its precedence order.
+- **`agy` parses frontmatter as strict YAML.** An unquoted `description` containing `: ` is invalid YAML; Claude Code accepts it anyway, so a broken file can sit there for months looking fine. Use a `>-` block for anything long.
+- **`glob` is singular, and its value is one comma-separated string.** `globs: ["*.ts"]` fails to unmarshal and silently discards the *entire* rule, `trigger` and all. Brace expansion doesn't survive the comma split either — write `**/*.ts, **/*.tsx`, not `**/*.{ts,tsx}`. Quote the value, since a bare `*` opens a YAML alias.
+- **`trigger` accepts exactly `always_on`, `model_decision`, `manual`, `glob`.** Anything else, including a missing frontmatter block, drops the rule without a word.
+- **`agy` truncates a rule body at 24,000 characters** — not the 12,000 its public docs claim.
+
 ## Quick access to iOS/Android simulators
 
 Fish abbreviations expand inline to the real `xcrun` / `adb` command, so the URL stays editable. Swap it for any deep link like `myapp://route`.

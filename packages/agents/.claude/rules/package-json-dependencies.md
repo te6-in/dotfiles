@@ -1,0 +1,1 @@
+../../.agents/rules/package-json-dependencies.md

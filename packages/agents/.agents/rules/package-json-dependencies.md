@@ -1,3 +1,10 @@
+---
+description: How dependencies are added and updated.
+paths: ["**/package.json"]
+trigger: glob
+glob: "**/package.json"
+---
+
 # `package.json` dependencies
 
 Use the package manager's `add` command to install or update dependencies. Don't hand-edit `package.json` and then run `install` — the `add` command places the dependency in the right section (`dependencies` / `devDependencies` / `peerDependencies`), resolves and writes the correct version range, and updates the lockfile atomically. Check the lockfile to determine which package manager the repo uses.

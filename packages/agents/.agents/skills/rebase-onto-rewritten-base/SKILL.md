@@ -1,4 +1,5 @@
 ---
+name: rebase-onto-rewritten-base
 description: Recover a branch after its base was force-pushed (history rewritten) — back it up, rebase the branch's own commits onto the current remote base tip with git rebase --onto, then read what the base changed in between and report what the branch must adapt to. Works in any git repo.
 argument-hint: "[base-branch]   # optional; auto-detected from origin/HEAD if omitted"
 ---
@@ -9,7 +10,7 @@ The branch you're currently on (call it FEATURE) was created off a base branch. 
 
 Run every step in order. Never push and never delete the backup automatically.
 
-**Always track this recovery with a todo list.** Before step 0, call `TaskCreate` with one item per numbered step below (0–7). Mark each item in-progress when you start it and completed when it's done — never batch them at the end. The multi-step recovery is conflict-prone and easy to lose your place in; the visible checklist is what keeps a step from being skipped.
+**Always track this recovery with a todo list.** Before step 0, create one todo item per numbered step below (0–7). Mark each item in-progress when you start it and completed when it's done — never batch them at the end. The multi-step recovery is conflict-prone and easy to lose your place in; the visible checklist is what keeps a step from being skipped.
 
 ## 0. Preconditions
 
@@ -28,7 +29,7 @@ Run every step in order. Never push and never delete the backup automatically.
   - Fork point: `git merge-base --fork-point origin/<b> "$FEATURE"` (may print nothing).
   - Unique-commit count: `MB=$(git merge-base origin/<b> "$FEATURE"); git rev-list --count "$MB".."$FEATURE"`.
 - The real base is the **closest ancestor**: the one whose fork point resolves and/or whose unique-commit count is smallest.
-- **Decision rule: if two or more candidates are plausible — a fork point resolves for more than one, or the unique-commit counts are close enough that the winner isn't obvious — use AskUserQuestion to confirm.** List each candidate as an option showing its fork-point short hash and unique-commit count (e.g. `main — fork a1b2c3d, 4 commits ahead`). The user can pick another via "Other". Only proceed without asking when exactly one candidate is clearly closest.
+- **Decision rule: if two or more candidates are plausible — a fork point resolves for more than one, or the unique-commit counts are close enough that the winner isn't obvious — ask the user to confirm.** List each candidate as an option showing its fork-point short hash and unique-commit count (e.g. `main — fork a1b2c3d, 4 commits ahead`). The user can pick another via "Other". Only proceed without asking when exactly one candidate is clearly closest.
 
 ## 2. Identify FEATURE's own commits
 
@@ -48,76 +49,16 @@ Run every step in order. Never push and never delete the backup automatically.
 - `git rebase --onto origin/$BASE "$FORK" "$FEATURE"` — replays only `$FORK..FEATURE` onto the freshly fetched remote tip. Use `origin/$BASE`, NOT the local `$BASE` branch, which may be stale and may be checked out in another worktree.
 - On conflict:
   - Resolve the conflicted files, `git add` the resolved paths, then `git rebase --continue`.
-  - If conflicts land in generated/derived files that the repo can regenerate, prefer regenerating them over choosing a side, then `git add`. (If a separate command handles that regeneration, run it now.)
+  - If conflicts land in generated/derived files that the repo can regenerate, prefer regenerating them over choosing a side, then `git add`. (If a separate skill handles that regeneration, invoke it now.)
   - If rebase stops because a commit became empty / is already in the new base, run `git rebase --skip`.
   - If a conflict can't be resolved with confidence, STOP and report exactly which commit and file are stuck — don't guess. (`git rebase --abort` returns FEATURE to its pre-rebase tip; the backup branch also still holds it.)
 - Repeat until the rebase completes.
 
 ### Generated-file conflict loop (optional automation)
 
-When conflicts keep landing in **regenerable files** (lockfiles, codegen output, build aggregates) and the repo has a regeneration command, the loop script below can drive the rest of the rebase: regenerate → verify markers gone → stage → continue, bailing out to manual handling the moment anything falls outside the pattern.
+When conflicts keep landing in **regenerable files** (lockfiles, codegen output, build aggregates) and the repo has a regeneration command, a bundled script can drive the rest of the rebase: regenerate → verify markers gone → stage → continue, bailing out to manual handling the moment anything falls outside the pattern.
 
-**Warm up manually before automating.** This skill can't know what counts as generated in the repo at hand — the first stops are where you find out. Never start the rebase with the loop:
-
-1. Handle the first conflict stop (a couple, if the first isn't representative) fully by hand, per the bullets above:
-   - Find the regeneration command, preferring sources in this order: a repo-specific conflict/regeneration skill (invoke it if one is listed), CLAUDE.md / project docs, then AskUserQuestion.
-   - **Manifest before lockfile.** If a manifest the install step parses (`package.json`, `Cargo.toml`, …) is conflicted, resolve it by hand FIRST — conflict markers in it break the install step, and the lockfile only regenerates cleanly against a valid manifest. Lockfiles themselves count as generated when the regen chain includes the install.
-   - Run the regen command, confirm it exits 0 and actually clears the markers in the conflicted files, stage, continue.
-2. Switch to the loop only once at least one stop has been resolved end-to-end by regeneration and the next stop repeats the pattern. Fill in the parameters from what you observed, not from guesses:
-   - `REGEN_CMD` — the exact chain that worked in step 1, run from the repo root.
-   - `GENERATED_RE` — extended regex matching the conflicted paths regeneration actually rewrote (plus obvious siblings, e.g. the rest of the same output directory). Keep it tight: an unmatched path stops the loop for manual handling, which is the safe direction to err in.
-3. Write the script to the scratchpad with the parameters filled in and run it via Bash with `run_in_background: true` — regen chains are slow, and each replayed commit may trigger another run.
-4. The loop exits non-zero when: a non-generated file conflicts (exit 3), the regen command fails (exit 4), or conflict markers survive regeneration (exit 5). On any stop, handle that one stop manually per the bullets above — widening `GENERATED_RE` only if regeneration provably rewrote the newly conflicted path — then re-run the loop; it picks up from the current rebase state.
-
-```sh
-#!/bin/bash
-# Auto-resolve rebase conflicts confined to regenerable files.
-set -u
-GENERATED_RE=''   # FILL IN: paths safe to regen-resolve, e.g. '^(package-lock\.json|src/generated/)'
-REGEN_CMD=''      # FILL IN: repo's regeneration chain, e.g. 'npm install && npm run codegen'
-LOGDIR=/tmp       # FILL IN: session scratchpad dir
-
-[ -n "$GENERATED_RE" ] && [ -n "$REGEN_CMD" ] || { echo "STOP: fill in GENERATED_RE and REGEN_CMD first"; exit 1; }
-cd "$(git rev-parse --show-toplevel)" || exit 1
-GITDIR=$(git rev-parse --git-dir)
-i=0
-while [ -d "$GITDIR/rebase-merge" ] || [ -d "$GITDIR/rebase-apply" ]; do
-  i=$((i+1))
-  unmerged=$(git diff --name-only --diff-filter=U)
-
-  if [ -z "$unmerged" ]; then
-    # No conflicts recorded — a continue is pending, or the commit became empty.
-    out=$(GIT_EDITOR=true git rebase --continue 2>&1) && { echo "$out" | tail -3; continue; }
-    if echo "$out" | grep -qi "no changes\|nothing to commit"; then
-      git rebase --skip 2>&1 | tail -3
-      continue
-    fi
-    echo "STOP: rebase --continue failed without unmerged files"; echo "$out" | tail -10; exit 2
-  fi
-
-  bad=$(echo "$unmerged" | grep -vE "$GENERATED_RE" || true)
-  if [ -n "$bad" ]; then
-    echo "STOP: non-generated conflicts need manual resolution:"; echo "$bad"; exit 3
-  fi
-
-  echo "=== iteration $i: regenerating for ==="; echo "$unmerged"
-  ( eval "$REGEN_CMD" ) > "$LOGDIR/regen-$i.log" 2>&1 || { echo "STOP: regen failed (see regen-$i.log)"; exit 4; }
-
-  markers=$(printf '%s' "$unmerged" | tr '\n' '\0' | xargs -0 grep -l '^<<<<<<<' 2>/dev/null || true)
-  if [ -n "$markers" ]; then
-    echo "STOP: conflict markers remain after regen:"; echo "$markers"; exit 5
-  fi
-
-  git add -A   # regen output may add/delete files; all of it belongs to this commit's resolution
-  if git diff --cached --quiet; then
-    git rebase --skip 2>&1 | tail -3   # resolution made the commit empty
-  else
-    GIT_EDITOR=true git rebase --continue 2>&1 | tail -4
-  fi
-done
-echo "=== rebase completed ==="
-git log --oneline -3
-```
+Read [references/generated-file-conflict-loop.md](references/generated-file-conflict-loop.md) before reaching for it — it carries a mandatory warm-up (resolve at least one stop by hand first) plus the flag reference and exit codes. The script itself is at `${CLAUDE_SKILL_DIR}/scripts/regen-conflict-loop.sh`.
 
 ## 5. Verify and report
 
@@ -189,7 +130,7 @@ If nothing needs adapting, say so outright — "read N base commits, nothing FEA
 
 ### 6d. Ask before changing anything
 
-Use AskUserQuestion with the findings in hand:
+Ask the user, with the findings in hand:
 
 - "Apply the adaptations" → make them as **a separate commit on top of FEATURE**. Never amend them into a replayed commit: the rebase's provenance stays auditable and step 5's range-diff stays valid.
 - "Report only" → leave the branch as verified; the user handles it.
@@ -198,7 +139,7 @@ Skip this question entirely when 6c found nothing.
 
 ## 7. Ask what to do next
 
-Once the rebase is verified and any adaptations from step 6 are committed, use a **single AskUserQuestion call with exactly two questions**:
+Once the rebase is verified and any adaptations from step 6 are committed, ask **exactly two questions, together in one go**:
 
 1. **Force-push FEATURE?** History was rewritten, so publishing it needs a force push.
    - "Force-push now" → run `git push --force-with-lease` (if FEATURE has no upstream yet, `git push -u origin "$FEATURE"` is enough).
