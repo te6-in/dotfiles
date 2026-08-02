@@ -3,6 +3,7 @@ name: recall
 description: Find past Claude Code sessions that discussed a given topic. Returns a summary of the matched conversation plus commands to jump back into that session. Invoke when the user asks you to "find", "recall", or "search" something from previous sessions, or says they vaguely remember talking about X and want to get back to it.
 context: fork
 agent: Explore
+disable-model-invocation: true
 ---
 
 `$ARGUMENTS` is the topic, question, or context the user wants to recall from a past conversation. Examples: "Reshaped margin implementation research", "ABC-1234" (a Linear issue), "discussion about Figma integration".
