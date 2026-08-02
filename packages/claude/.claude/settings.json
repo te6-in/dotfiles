@@ -1,4 +1,11 @@
 {
+  "skillListingBudgetFraction": 0.02,
+  "disableWorkflows": true,
+  "disableAgentView": true,
+  "env": {
+    "ENABLE_TOOL_SEARCH": "true",
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+  },
   "permissions": {
     "allow": [
       "Bash(echo:*)",
@@ -96,13 +103,25 @@
       "mcp__plugin_Notion_notion__notion-move-pages",
       "mcp__plugin_Notion_notion__notion-query-meeting-notes",
       "mcp__plugin_Notion_notion__notion-update-data-source",
-      "mcp__plugin_Notion_notion__notion-update-view"
+      "mcp__plugin_Notion_notion__notion-update-view",
+      "mcp__plugin_slack_slack__*canvas*",
+      "mcp__plugin_slack_slack__*reaction*",
+      "mcp__plugin_slack_slack__slack_list_channel_members",
+      "mcp__plugin_slack_slack__slack_read_user_profile",
+      "mcp__plugin_slack_slack__slack_search_emojis",
+      "mcp__plugin_slack_slack__slack_search_public_and_private"
     ],
     "ask": [
       "Read(**/.env)",
       "Read(**/.env.*)"
-    ]
+    ],
+    "defaultMode": "auto"
   },
+  "model": "opus[1m]",
+  "enabledMcpjsonServers": [
+    "seed-design-figma",
+    "seed-design-docs"
+  ],
   "hooks": {
     "PreToolUse": [
       {
@@ -206,36 +225,42 @@
       }
     ]
   },
+  "worktree": {
+    "baseRef": "fresh"
+  },
   "statusLine": {
     "type": "command",
     "command": "/opt/homebrew/bin/starship statusline claude-code"
   },
-  "enabledMcpjsonServers": [
-    "seed-design-figma",
-    "seed-design-docs"
-  ],
   "enabledPlugins": {
-    "typescript-lsp@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": false,
+    "claude-md-management@claude-plugins-official": true,
     "code-review@claude-plugins-official": true,
-    "feature-dev@claude-plugins-official": true,
-    "code-simplifier@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "explanatory-output-style@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": false,
     "linear@claude-plugins-official": true,
     "notion@claude-plugins-official": true,
-    "slack@claude-plugins-official": true
+    "pr-review-toolkit@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": true,
+    "slack@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "datadog@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": true,
+    "figma@claude-plugins-official": false
   },
+  "extraKnownMarketplaces": {},
   "language": "the language of the user's most recent message",
   "feedbackSurveyRate": 0,
   "effortLevel": "xhigh",
+  "emojiCompletionEnabled": false,
+  "awaySummaryEnabled": false,
+  "tui": "fullscreen",
   "showThinkingSummaries": true,
+  "skipWorkflowUsageWarning": true,
   "theme": "custom:material-stone",
   "preferredNotifChannel": "iterm2",
   "autoCompactEnabled": false,
   "remoteControlAtStartup": true,
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true,
-  "awaySummaryEnabled": false
+  "skipAutoPermissionPrompt": true
 }
