@@ -6,7 +6,7 @@ imported here as well, or they land in context twice.
 
 The files that stay in instructions/ are the ones that name a Claude Code tool or setting
 outright: asking-the-user (AskUserQuestion), notifications (PushNotification),
-notion (Notion MCP), model-name.
+local-references (permissions.additionalDirectories), notion (Notion MCP), model-name.
 They are the adapter layer — the neutral rules say "ask the user", these say which tool
 that means here.
 -->
@@ -19,6 +19,14 @@ that means here.
 
 @instructions/asking-the-user.md
 @instructions/notifications.md
+
+# Shell & execution
+
+The Bash tool runs zsh (login, non-interactive — `~/.zshrc` is not sourced), despite the tool's name saying bash and the `Shell: fish` environment-context line saying fish; ignore both. Never write fish-only syntax (`for … end`, etc.), and don't lean on bash-isms that zsh handles differently (unquoted word splitting, 0-indexed arrays, `read -a`) — stick to POSIX-compatible syntax.
+
+# References & dependencies
+
+@instructions/local-references.md
 
 # Workflow integrations
 

@@ -60,7 +60,7 @@ Write a `description` that says what the file *governs*, not what it says, so it
 
 Both agents also honor `disable-model-invocation`, so a `/`-only skill stays `/`-only in both.
 
-What can't be neutral stays in `packages/claude/`. The skills: `recall` and `recap` parse Claude Code's own JSONL transcripts, and the Linear/Notion ones need MCP servers only Claude Code has. The instructions: `asking-the-user`, `notion`, and `model-name` each name a Claude Code tool or setting outright. Those are the adapter layer — the neutral rules say "ask the user", these say which tool that means here. They stay `@`-imported from `CLAUDE.md`; the neutral ones must **not** be, or they load twice.
+What can't be neutral stays in `packages/claude/`. The skills: `recall` and `recap` parse Claude Code's own JSONL transcripts, `linear-read-issue` depends on forking into a subagent, and the Linear/Notion ones need MCP servers only Claude Code has. The instructions: `asking-the-user`, `notifications`, `local-references`, `notion`, and `model-name` each name a Claude Code tool or setting outright. Those five are the adapter layer — the neutral rules say "ask the user", these say which tool that means here. They stay `@`-imported from `CLAUDE.md`; the neutral ones must **not** be, or they load twice.
 
 Gotchas worth remembering, all found the hard way:
 
