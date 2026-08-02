@@ -1,3 +1,8 @@
+# Stop `brew upgrade` / `brew bundle` from re-downloading casks that already
+# self-update (e.g. browsers). Without this brew nags and re-upgrades
+# them on every run.
+set -gx HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS 1
+
 # Cache `brew shellenv fish` and only regenerate when Homebrew changes, so the
 # hot path is a plain `source` instead of spawning brew (Ruby) + path_helper
 # (~110ms) on every shell. Sentinels: the shellenv source (tracks output-format
