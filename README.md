@@ -70,6 +70,14 @@ Gotchas worth remembering, all found the hard way:
 - **`trigger` accepts exactly `always_on`, `model_decision`, `manual`, `glob`.** Anything else, including a missing frontmatter block, drops the rule without a word.
 - **`agy` truncates a rule body at 24,000 characters** — not the 12,000 its public docs claim.
 
+### Third-party skills stay on `npx skills`
+
+[`npx skills`](https://github.com/vercel-labs/skills) owns `~/.agents/skills/` for skills pulled from other people's repos, and materializes them there as real directories. Stow puts its symlinks in the same directory, which is fine — the two only collide if the *same skill name* is managed by both. Don't let that happen.
+
+Don't hand your own skills to `npx skills` either: it copies from the source instead of linking, and `skills update` ignores `sourceType: local`, so every edit would need a re-install to take effect.
+
+Its lockfile is stowed out of `packages/agents/.agents/.skill-lock.json`, so this repo carries the manifest — a Brewfile for skills, listing every source repo and which skills came from it. `npx skills add -g` writes through the symlink, so it stays current on its own. There's no matching `bundle install`, though: the CLI's `experimental_install` only replays a project's `skills-lock.json` into `./.agents/skills/` and never reads the global one, hence the loop in step 5 of the bootstrap.
+
 ## Quick access to iOS/Android simulators
 
 Fish abbreviations expand inline to the real `xcrun` / `adb` command, so the URL stays editable. Swap it for any deep link like `myapp://route`.
@@ -106,7 +114,11 @@ cd packages && stow -t ~ */
 # Or selectively
 stow -t ~ fish git starship
 
-# 5. (Optional) Enable brew autoupdate
+# 5. Reinstall third-party skills from the committed lockfile
+jq -r '.skills | to_entries | group_by(.value.source)[] | "\(.[0].value.source) \(map(.key) | join(" "))"' \
+  ~/.agents/.skill-lock.json | while read -r src skills; do npx skills add "$src" -g -y --skill $skills; done
+
+# 6. (Optional) Enable brew autoupdate
 brew autoupdate start --upgrade --immediate --cleanup --sudo
 ```
 

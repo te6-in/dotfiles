@@ -1,0 +1,78 @@
+{
+  "version": 3,
+  "skills": {
+    "a11y-debugging": {
+      "source": "ChromeDevTools/chrome-devtools-mcp",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/ChromeDevTools/chrome-devtools-mcp.git",
+      "skillPath": "skills/a11y-debugging/SKILL.md",
+      "skillFolderHash": "49deb16531307e3333894df1839611e2d80958dc",
+      "installedAt": "2026-07-22T03:37:37.945Z",
+      "updatedAt": "2026-07-22T03:37:37.945Z"
+    },
+    "chrome-devtools": {
+      "source": "ChromeDevTools/chrome-devtools-mcp",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/ChromeDevTools/chrome-devtools-mcp.git",
+      "skillPath": "skills/chrome-devtools/SKILL.md",
+      "skillFolderHash": "4614c438e4296a1bcfde1ffd7720713834835305",
+      "installedAt": "2026-07-22T03:37:37.947Z",
+      "updatedAt": "2026-07-22T03:37:37.947Z"
+    },
+    "chrome-devtools-cli": {
+      "source": "ChromeDevTools/chrome-devtools-mcp",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/ChromeDevTools/chrome-devtools-mcp.git",
+      "skillPath": "skills/chrome-devtools-cli/SKILL.md",
+      "skillFolderHash": "1d333eff605093c8f3e507d4ad0cd0d30be25c57",
+      "installedAt": "2026-07-22T03:37:37.947Z",
+      "updatedAt": "2026-07-22T03:37:37.947Z"
+    },
+    "debug-optimize-lcp": {
+      "source": "ChromeDevTools/chrome-devtools-mcp",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/ChromeDevTools/chrome-devtools-mcp.git",
+      "skillPath": "skills/debug-optimize-lcp/SKILL.md",
+      "skillFolderHash": "692b98d63c0f0992cf3d3817416dd754346465ba",
+      "installedAt": "2026-07-22T03:37:37.947Z",
+      "updatedAt": "2026-07-22T03:37:37.947Z"
+    },
+    "memory-leak-debugging": {
+      "source": "ChromeDevTools/chrome-devtools-mcp",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/ChromeDevTools/chrome-devtools-mcp.git",
+      "skillPath": "skills/memory-leak-debugging/SKILL.md",
+      "skillFolderHash": "f1ea3290d58f19e5f9d7016cd2aecc7b82682053",
+      "installedAt": "2026-07-22T03:37:37.948Z",
+      "updatedAt": "2026-07-22T03:37:37.948Z"
+    },
+    "troubleshooting": {
+      "source": "ChromeDevTools/chrome-devtools-mcp",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/ChromeDevTools/chrome-devtools-mcp.git",
+      "skillPath": "skills/troubleshooting/SKILL.md",
+      "skillFolderHash": "f373975e1e83ee0e35d8961d5d66720f6fbda350",
+      "installedAt": "2026-07-22T03:37:37.948Z",
+      "updatedAt": "2026-07-22T03:37:37.948Z"
+    }
+  },
+  "dismissed": {
+    "findSkillsPrompt": true
+  },
+  "lastSelectedAgents": [
+    "amp",
+    "antigravity",
+    "antigravity-cli",
+    "cline",
+    "codex",
+    "cursor",
+    "deepagents",
+    "gemini-cli",
+    "github-copilot",
+    "kimi-code-cli",
+    "opencode",
+    "warp",
+    "zed",
+    "claude-code"
+  ]
+}
