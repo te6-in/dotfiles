@@ -1,2 +1,2 @@
-# Default Linear team key consumed by ~/.claude/instructions/linear.md
+# Default Linear team key consumed by the linear-workflow / linear-read-issue skills
 set -gx LINEAR_DEFAULT_TEAM_KEY XXX

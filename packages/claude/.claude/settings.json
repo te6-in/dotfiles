@@ -43,23 +43,23 @@
       "Bash(cmux rename-workspace:*)",
       "mcp__ide__getDiagnostics",
       "mcp__chrome-devtools",
-      "mcp__claude_ai_Linear__get_attachment",
-      "mcp__claude_ai_Linear__get_document",
-      "mcp__claude_ai_Linear__get_issue_status",
-      "mcp__claude_ai_Linear__get_issue",
-      "mcp__claude_ai_Linear__get_project",
-      "mcp__claude_ai_Linear__get_team",
-      "mcp__claude_ai_Linear__get_user",
-      "mcp__claude_ai_Linear__list_comments",
-      "mcp__claude_ai_Linear__list_cycles",
-      "mcp__claude_ai_Linear__list_documents",
-      "mcp__claude_ai_Linear__list_issue_statuses",
-      "mcp__claude_ai_Linear__list_issue_labels",
-      "mcp__claude_ai_Linear__list_issues",
-      "mcp__claude_ai_Linear__list_projects",
-      "mcp__claude_ai_Linear__list_teams",
-      "mcp__claude_ai_Linear__save_issue",
-      "mcp__claude_ai_Linear__save_comment",
+      "mcp__plugin_linear_linear__get_attachment",
+      "mcp__plugin_linear_linear__get_document",
+      "mcp__plugin_linear_linear__get_issue_status",
+      "mcp__plugin_linear_linear__get_issue",
+      "mcp__plugin_linear_linear__get_project",
+      "mcp__plugin_linear_linear__get_team",
+      "mcp__plugin_linear_linear__get_user",
+      "mcp__plugin_linear_linear__list_comments",
+      "mcp__plugin_linear_linear__list_cycles",
+      "mcp__plugin_linear_linear__list_documents",
+      "mcp__plugin_linear_linear__list_issue_statuses",
+      "mcp__plugin_linear_linear__list_issue_labels",
+      "mcp__plugin_linear_linear__list_issues",
+      "mcp__plugin_linear_linear__list_projects",
+      "mcp__plugin_linear_linear__list_teams",
+      "mcp__plugin_linear_linear__save_issue",
+      "mcp__plugin_linear_linear__save_comment",
       "mcp__plugin_Notion_notion__notion-fetch",
       "mcp__plugin_slack_slack__slack_read_thread",
       "mcp__plugin_slack_slack__slack_search_public",
@@ -67,7 +67,23 @@
     ],
     "deny": [
       "Read(**/*.secret)",
-      "Read(**/*.secret.*)"
+      "Read(**/*.secret.*)",
+      "mcp__plugin_linear_linear__*customer*",
+      "mcp__plugin_linear_linear__*initiative*",
+      "mcp__plugin_linear_linear__*release*",
+      "mcp__plugin_linear_linear__*milestone*",
+      "mcp__plugin_linear_linear__*diff*",
+      "mcp__plugin_linear_linear__*status_update*",
+      "mcp__plugin_linear_linear__*agent_skill*",
+      "mcp__plugin_linear_linear__create_attachment*",
+      "mcp__plugin_linear_linear__prepare_attachment_upload",
+      "mcp__plugin_linear_linear__delete_attachment",
+      "mcp__plugin_linear_linear__list_users",
+      "mcp__plugin_linear_linear__list_project_labels",
+      "mcp__plugin_linear_linear__create_issue_label",
+      "mcp__plugin_linear_linear__save_document",
+      "mcp__plugin_linear_linear__save_project",
+      "mcp__plugin_linear_linear__search_documentation"
     ],
     "ask": [
       "Read(**/.env)",
@@ -95,11 +111,30 @@
         ]
       },
       {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/require-linear-issue.sh"
+          }
+        ]
+      },
+      {
         "matcher": "mcp__plugin_slack_slack__slack_send_message",
         "hooks": [
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/auto-approve-slack-self-dm.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/linear-noissue-marker.sh"
           }
         ]
       }
@@ -121,6 +156,7 @@
     "commit-commands@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
     "explanatory-output-style@claude-plugins-official": true,
+    "linear@claude-plugins-official": true,
     "notion@claude-plugins-official": true,
     "slack@claude-plugins-official": true
   },

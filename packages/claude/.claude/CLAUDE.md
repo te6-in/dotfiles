@@ -21,8 +21,17 @@ that means here.
 # Workflow integrations
 
 @instructions/cmux.md
-@instructions/linear.md
 @instructions/notion.md
+
+## Linear
+
+Work repos — those whose git remote sits under one of the GitHub orgs in `$WORK_GITHUB_ORGS` — track their work in Linear. Run `echo $WORK_GITHUB_ORGS` if you need the list; unset means no repo is a work repo. In one of those, load the `linear-workflow` skill before your first code edit and follow it; it carries the issue-identification flow, status transitions, and the writing conventions. Load it too whenever you create or update a Linear issue.
+
+**To read an issue, use `linear-read-issue` instead** — it forks, reads the issue with its comments, relations, and linked Slack/Notion/PR content, and returns a brief, so none of that lands in this conversation. It stands alone: don't load `linear-workflow` first just to read something.
+
+Anywhere else Linear is off: no issue search, no questions about issues, no remarks about its absence. Being off is silent — don't announce it, don't ask whether to make an exception.
+
+That gate kills the automatic workflow, not the tool. If I name an issue ("ABC-1234 봐줘") or ask for something on Linear outright, do it from any repo — read it with `linear-read-issue`, and follow `linear-workflow`'s writing rules for anything you write back.
 
 # Code
 

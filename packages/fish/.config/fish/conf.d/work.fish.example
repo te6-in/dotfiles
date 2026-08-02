@@ -1,0 +1,12 @@
+# GitHub orgs whose repos anchor their work to Linear. Space-separated.
+# Consumed by ~/.claude/hooks/require-linear-issue.sh; referenced by
+# ~/.claude/CLAUDE.md and the linear-workflow skill.
+# Unset means the Linear gate is off in every repo, which is the right
+# default for a clone that isn't tied to an employer.
+set -gx WORK_GITHUB_ORGS "org-one org-two"
+
+# Clone destination override, consumed by the git rule: repos under
+# $WORK_CLONE_ORG land in $WORK_CLONE_DIR instead of ~/Projects.
+# Leave both unset to always clone into ~/Projects.
+set -gx WORK_CLONE_ORG org-one
+set -gx WORK_CLONE_DIR "$HOME/Projects/_work"
