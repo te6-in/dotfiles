@@ -1,0 +1,114 @@
+#!/bin/sh
+# portless LAN forwarder — makes loopback-bound portless routes reachable from other devices.
+#
+# usage: portless-lan-forward [status|install|uninstall] [-p port]
+#
+# why this exists:
+#   portless binds the proxy to 127.0.0.1 only. Its --lan flag opens 0.0.0.0, but that
+#   flag also hard-forces the TLD to .local (see `effectiveTlds` in portless's cli.js),
+#   which throws away a custom .test domain. So LAN mode and a custom TLD are mutually
+#   exclusive, and the custom domain is the whole point.
+#
+#   This installs a root launchd daemon that listens on 0.0.0.0:<port> and forwards to
+#   127.0.0.1:<port>, where portless already is. The kernel routes loopback traffic to
+#   the more specific 127.0.0.1 bind, so requests from this machine reach portless
+#   directly and never traverse the forwarder — no loop. Requests from a phone, an
+#   Android emulator, or a teammate arrive on the LAN interface and get relayed.
+#
+#   TCP is forwarded verbatim, so the Host header survives and portless routes on it
+#   exactly as it does locally. Nothing here knows the machine's IP, so this is portable
+#   across machines and survives DHCP changes untouched.
+#
+# the daemon itself is plain socat with no dependency on this script or on $HOME, so it
+# keeps working even if the dotfiles checkout moves. This script only writes the plist.
+
+set -e
+
+LABEL="in.te6.portless-lan-forward"
+PLIST="/Library/LaunchDaemons/$LABEL.plist"
+PORT=80
+
+usage() {
+    echo "usage: portless-lan-forward [status|install|uninstall] [-p port]" >&2
+    exit 2
+}
+
+cmd="status"
+case ${1-} in
+    status | install | uninstall) cmd=$1; shift ;;
+    -p) ;;
+    "") ;;
+    *) usage ;;
+esac
+while [ $# -gt 0 ]; do
+    case $1 in
+        -p | --port) shift; PORT=${1-} ;;
+        *) usage ;;
+    esac
+    [ $# -gt 0 ] && shift
+done
+[ -n "$PORT" ] || usage
+
+require_root() {
+    [ "$(id -u)" -eq 0 ] || {
+        echo "portless-lan-forward: $cmd needs root (port $PORT is privileged)" >&2
+        echo "  sudo portless-lan-forward $cmd -p $PORT" >&2
+        exit 1
+    }
+}
+
+case $cmd in
+    status)
+        if launchctl print "system/$LABEL" >/dev/null 2>&1; then
+            echo "daemon: loaded ($LABEL)"
+        else
+            echo "daemon: not loaded"
+        fi
+        # -n keeps lsof from stalling on reverse DNS for every connected peer
+        lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | awk -v p=":$PORT" '$9 ~ p"$" {print "listening: " $9 "  (" $1 ", pid " $2 ")"}'
+        ;;
+
+    install)
+        require_root
+        socat=$(command -v socat) || {
+            echo "portless-lan-forward: socat not found (brew install socat)" >&2
+            exit 1
+        }
+        # socat's absolute path is baked in: launchd daemons run with a minimal PATH
+        # that doesn't include Homebrew, and the prefix differs on Intel vs Apple Silicon.
+        cat > "$PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>$LABEL</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>$socat</string>
+		<string>TCP-LISTEN:$PORT,fork,reuseaddr</string>
+		<string>TCP:127.0.0.1:$PORT</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/var/log/$LABEL.log</string>
+</dict>
+</plist>
+EOF
+        chown root:wheel "$PLIST"
+        chmod 644 "$PLIST"
+        launchctl bootout "system/$LABEL" 2>/dev/null || true
+        launchctl bootstrap system "$PLIST"
+        echo "installed: 0.0.0.0:$PORT -> 127.0.0.1:$PORT ($socat)"
+        ;;
+
+    uninstall)
+        require_root
+        launchctl bootout "system/$LABEL" 2>/dev/null || true
+        rm -f "$PLIST"
+        echo "uninstalled: $LABEL"
+        ;;
+esac

@@ -1,0 +1,18 @@
+# portless — stable, named URLs for local dev servers, in place of port numbers.
+# Copy to portless.local.fish and fill in the domain issued for this machine.
+#
+# The domain is a fixed {name}.test (+ wildcard *.{name}.test) issued per device and
+# answered by internal DNS, so any device on the same network resolves it.
+
+# Apps become <app>.{name}.test; git worktrees add <branch>.<app>.{name}.test.
+# Multi-segment TLDs need portless 0.15.5+.
+set -gx PORTLESS_TLD {name}.test
+
+# Plain HTTP on port 80. HTTPS would mean installing portless's local CA on every
+# phone, simulator, and teammate machine that opens the URL.
+set -gx PORTLESS_HTTPS 0
+
+# Deliberately NOT set: PORTLESS_LAN / --lan. LAN mode is the only thing that binds the
+# proxy beyond loopback, but it also hard-forces the TLD to .local and discards the one
+# above, which would throw away the whole issued domain. `portless-lan-forward` covers
+# the reachability half instead, leaving the TLD alone.

@@ -33,8 +33,15 @@ abbr --add pi "pnpm i"
 abbr --add pd "pnpm run dev"
 abbr --add pb "pnpm run build"
 
+abbr --add pl "portless"
+abbr --add pll "portless list"
+abbr --add plg --set-cursor=NAME "portless get NAME"
+abbr --add pld "portless doctor"
+
 abbr --add simsaf --set-cursor=PORT "xcrun simctl openurl booted 'http://localhost:PORT'"
 abbr --add simsafu --set-cursor=URL "xcrun simctl openurl booted 'URL'"
+abbr --add simsafp --set-cursor=NAME "xcrun simctl openurl booted \$(plurl NAME)"
 
 abbr --add emwv --set-cursor=PORT "adb shell am start -n org.chromium.webview_shell/.WebViewBrowserActivity -d 'http://10.0.2.2:PORT'"
 abbr --add emwvu --set-cursor=URL "adb shell am start -n org.chromium.webview_shell/.WebViewBrowserActivity -d 'URL'"
+abbr --add emwvp --set-cursor=NAME "adb shell am start -n org.chromium.webview_shell/.WebViewBrowserActivity -d \$(plurl NAME)"

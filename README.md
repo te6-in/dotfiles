@@ -85,6 +85,16 @@ Fish abbreviations expand inline to the real `xcrun` / `adb` command, so the URL
 - `simsaf <PORT>` opens `localhost:<PORT>` in iOS Simulator Safari.
 - `emwv <PORT>` opens `10.0.2.2:<PORT>` in Android Emulator's WebView Shell.
 
+## One URL per app, no port numbers
+
+[portless](https://portless.sh) fronts every dev server with a named host under a fixed `.test` domain, so the address survives restarts and reaches phones and emulators unchanged. `PORTLESS_TLD` picks the domain, in a gitignored `portless.local.fish`.
+
+- `<app>.<name>.test` per project, `<branch>.<app>.<name>.test` per git worktree.
+- The `*p` abbreviations resolve that URL for you: `simsafp`, `emwvp`.
+- Claude Code is told to read the URL off `portless list` instead of guessing `localhost:3000`.
+
+portless binds loopback only. Its `--lan` flag opens `0.0.0.0` but hard-forces the TLD to `.local`, discarding the issued domain — so `portless-lan-forward` installs a root daemon that relays `0.0.0.0:80` to `127.0.0.1:80` instead, leaving the TLD alone. It knows nothing about the machine's IP, so it ports to a new machine as-is. `docs/portless-drop-lan-forwarder.md` retires it if portless ever decouples the two.
+
 ## Self-renaming cmux workspaces
 
 [cmux](https://cmux.com/) runs coding agents in parallel tabs. The agent updates its own tab title whenever focus shifts, so you can find the right session at a glance.
