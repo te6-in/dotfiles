@@ -87,7 +87,17 @@
       "mcp__plugin_linear_linear__create_issue_label",
       "mcp__plugin_linear_linear__save_document",
       "mcp__plugin_linear_linear__save_project",
-      "mcp__plugin_linear_linear__search_documentation"
+      "mcp__plugin_linear_linear__search_documentation",
+      "mcp__plugin_Notion_notion__notion-create-database",
+      "mcp__plugin_Notion_notion__notion-create-view",
+      "mcp__plugin_Notion_notion__notion-download-attachment",
+      "mcp__plugin_Notion_notion__notion-duplicate-page",
+      "mcp__plugin_Notion_notion__notion-get-teams",
+      "mcp__plugin_Notion_notion__notion-get-users",
+      "mcp__plugin_Notion_notion__notion-move-pages",
+      "mcp__plugin_Notion_notion__notion-query-meeting-notes",
+      "mcp__plugin_Notion_notion__notion-update-data-source",
+      "mcp__plugin_Notion_notion__notion-update-view"
     ],
     "ask": [
       "Read(**/.env)",
