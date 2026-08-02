@@ -1,0 +1,1 @@
+../../.agents/rules/command-exit-codes.md
