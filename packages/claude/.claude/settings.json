@@ -112,6 +112,10 @@
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/rewrite-rm-to-trash.sh"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/gh-read-guard.sh"
           }
         ]
       },
