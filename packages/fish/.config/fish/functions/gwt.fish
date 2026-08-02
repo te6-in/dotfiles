@@ -1,4 +1,4 @@
-# git worktree helper: creates a worktree in a sibling directory <repo>-worktrees/<branch> and cd into it. -b to create new branch
+# git worktree helper: creates a worktree in <parent>/worktrees/<repo>/<branch> and cd into it. -b to create new branch
 function gwt
     set create_branch false
     set branch ""
@@ -20,7 +20,7 @@ function gwt
     set repo_name (basename "$main_worktree")
     set parent_dir (dirname "$main_worktree")
     set worktree_dir (string replace -a "/" "-" "$branch")
-    set worktree_path "$parent_dir/$repo_name-worktrees/$worktree_dir"
+    set worktree_path "$parent_dir/worktrees/$repo_name/$worktree_dir"
 
     if test "$create_branch" = true
         git worktree add -b "$branch" "$worktree_path"

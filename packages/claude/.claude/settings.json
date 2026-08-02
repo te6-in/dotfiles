@@ -232,7 +232,7 @@
   "effortLevel": "xhigh",
   "showThinkingSummaries": true,
   "theme": "custom:material-stone",
-  "preferredNotifChannel": "ghostty",
+  "preferredNotifChannel": "iterm2",
   "autoCompactEnabled": false,
   "remoteControlAtStartup": true,
   "inputNeededNotifEnabled": true,
