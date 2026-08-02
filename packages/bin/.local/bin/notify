@@ -1,0 +1,63 @@
+#!/bin/sh
+# shared notification helper — desktop (terminal-notifier) + phone (ntfy.sh) in one call.
+# callable from fish functions (ghw), Claude Code's Bash tool, and hooks alike, so keep it POSIX sh.
+#
+# usage: notify -m message [-t title] [-o url] [-s sound] [--source name]
+#
+# keep -t a brief single sentence, -m a short key-like summary. the message gets
+# " | Source: <name>" appended automatically: --source flag > $NOTIFY_SOURCE > no suffix.
+#
+# channels are best-effort and independent:
+#   - terminal-notifier: skipped when the binary is missing. -s → -sound, -o → -open.
+#   - ntfy.sh: skipped when no topic is configured ($NTFY_TOPIC, or ~/.config/ntfy/topic.secret).
+#     published via GET /publish with --data-urlencode so emoji/UTF-8 survive (headers can't carry them).
+# exits 1 only when no channel was available at all.
+
+usage() {
+    echo "usage: notify -m message [-t title] [-o url] [-s sound] [--source name]" >&2
+    exit 2
+}
+
+title='' message='' url='' sound='' source=''
+while [ $# -gt 0 ]; do
+    case $1 in
+        -t | --title) shift; title=${1-} ;;
+        -m | --message) shift; message=${1-} ;;
+        -o | --open) shift; url=${1-} ;;
+        -s | --sound) shift; sound=${1-} ;;
+        --source) shift; source=${1-} ;;
+        *) usage ;;
+    esac
+    [ $# -gt 0 ] && shift
+done
+[ -n "$message" ] || usage
+
+src=${source:-${NOTIFY_SOURCE:-}}
+[ -n "$src" ] && message="$message | Source: $src"
+
+sent=0
+
+if command -v terminal-notifier >/dev/null 2>&1; then
+    set -- -message "$message"
+    [ -n "$title" ] && set -- "$@" -title "$title"
+    [ -n "$sound" ] && set -- "$@" -sound "$sound"
+    [ -n "$url" ] && set -- "$@" -open "$url"
+    # backgrounded so callers return immediately
+    terminal-notifier "$@" >/dev/null 2>&1 &
+    sent=1
+fi
+
+topic=${NTFY_TOPIC:-}
+[ -z "$topic" ] && [ -r "$HOME/.config/ntfy/topic.secret" ] && topic=$(cat "$HOME/.config/ntfy/topic.secret")
+if [ -n "$topic" ]; then
+    set -- -fsS -m 10 -G --data-urlencode "message=$message"
+    [ -n "$title" ] && set -- "$@" --data-urlencode "title=$title"
+    [ -n "$url" ] && set -- "$@" --data-urlencode "click=$url"
+    curl "$@" "https://ntfy.sh/$topic/publish" >/dev/null 2>&1 &
+    sent=1
+fi
+
+if [ "$sent" -eq 0 ]; then
+    echo "notify: no channel available (terminal-notifier not installed, no ntfy topic configured)" >&2
+    exit 1
+fi

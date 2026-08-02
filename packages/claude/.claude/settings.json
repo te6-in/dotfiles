@@ -10,6 +10,7 @@
       "Bash(find:*)",
       "Bash(wc:*)",
       "Bash(trash:*)",
+      "Bash(notify:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git commit:*)",
@@ -138,6 +139,27 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/notify-on-stop.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "PushNotification",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/push-to-notify.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
@@ -168,6 +190,7 @@
   "preferredNotifChannel": "ghostty",
   "autoCompactEnabled": false,
   "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "awaySummaryEnabled": false
