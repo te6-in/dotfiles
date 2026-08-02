@@ -95,14 +95,6 @@ Fish abbreviations expand inline to the real `xcrun` / `adb` command, so the URL
 
 portless binds loopback only. Its `--lan` flag opens `0.0.0.0` but hard-forces the TLD to `.local`, discarding the issued domain — so `portless-lan-forward` installs a root daemon that relays `0.0.0.0:80` to `127.0.0.1:80` instead, leaving the TLD alone. It knows nothing about the machine's IP, so it ports to a new machine as-is. `docs/portless-drop-lan-forwarder.md` retires it if portless ever decouples the two.
 
-## Self-renaming cmux workspaces
-
-[cmux](https://cmux.com/) runs coding agents in parallel tabs. The agent updates its own tab title whenever focus shifts, so you can find the right session at a glance.
-
-## Warm-dark, agent and terminal
-
-`material-stone-dark` covers Ghostty(cmux), Fish, and Claude Code. One palette either side of the agent boundary.
-
 ## Bootstrap
 
 Install with [Homebrew](https://brew.sh/) and [GNU Stow](https://www.gnu.org/software/stow/).

@@ -11,8 +11,6 @@ abbr --add brewup "brew update && brew upgrade && brew outdated && brew autoremo
 abbr --add yt-dlpx "yt-dlp -x --audio-format m4a --audio-quality 0"
 abbr --add randstr --set-cursor=LEN "LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c LEN | pbcopy; echo copied (pbpaste | wc -c | string trim) chars"
 
-abbr --add crw "cmux rename-workspace"
-
 abbr --add dock-lock "defaults write com.apple.Dock contents-immutable -bool true; killall Dock"
 abbr --add dock-unlock "defaults write com.apple.Dock contents-immutable -bool false; killall Dock"
 
@@ -21,7 +19,6 @@ abbr --add f "fork ."
 
 abbr --add cc "claude"
 abbr --add ccr "claude --resume"
-abbr --add cct "cmux claude-teams"
 
 abbr --add b "bun run"
 abbr --add bd "bun run dev"

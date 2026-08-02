@@ -1,8 +1,5 @@
 tap "homebrew/autoupdate"
 
-tap "manaflow-ai/cmux"
-cask "cmux"
-
 tap "oven-sh/bun"
 brew "oven-sh/bun/bun"
 

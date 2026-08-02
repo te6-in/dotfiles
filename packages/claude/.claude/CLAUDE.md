@@ -22,7 +22,6 @@ that means here.
 
 # Workflow integrations
 
-@instructions/cmux.md
 @instructions/notion.md
 
 ## Linear

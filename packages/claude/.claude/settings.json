@@ -44,7 +44,6 @@
       "Bash(portless list:*)",
       "Bash(portless get:*)",
       "Bash(portless doctor:*)",
-      "Bash(cmux rename-workspace:*)",
       "mcp__ide__getDiagnostics",
       "mcp__chrome-devtools",
       "mcp__plugin_linear_linear__get_attachment",
