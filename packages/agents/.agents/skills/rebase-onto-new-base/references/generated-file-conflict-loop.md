@@ -1,6 +1,6 @@
 # Generated-file conflict loop
 
-Optional automation for step 4 of `rebase-onto-rewritten-base`. Use it when conflicts keep landing in **regenerable files** (lockfiles, codegen output, build aggregates) and the repo has a regeneration command. The loop drives the rest of the rebase: regenerate → verify markers gone → stage → continue, bailing out to manual handling the moment anything falls outside the pattern.
+Optional automation for step 4 of `rebase-onto-new-base`. Use it when conflicts keep landing in **regenerable files** (lockfiles, codegen output, build aggregates) and the repo has a regeneration command. The loop drives the rest of the rebase: regenerate → verify markers gone → stage → continue, bailing out to manual handling the moment anything falls outside the pattern.
 
 The script is bundled at `scripts/regen-conflict-loop.sh` inside this skill's directory; SKILL.md prints the absolute path. It takes its parameters as flags, so there is nothing to fill in and nothing to copy.
 
