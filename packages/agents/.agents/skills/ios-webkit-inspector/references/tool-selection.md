@@ -1,10 +1,10 @@
 # iwdp vs ios-simulator-mcp / idb — which to reach for
 
-These two tracks target different things and surface different information. They're **complements, not competitors** — knowing which one a task needs (and being able to explain that to the user) is half the battle.
+These two tracks surface different information about the same screen. They're **complements, not competitors** — knowing which one a task needs (and being able to explain that to the user) is half the battle. The split is web content vs native, not simulator vs device: both tracks reach a simulator.
 
 | Axis                               | A. `ios-simulator-mcp` (+ `simctl` / `idb`)      | B. iwdp (+ `eval.mjs`) — this skill             |
 | ---------------------------------- | ------------------------------------------------ | ----------------------------------------------- |
-| Target                             | iOS **Simulator**                                | **Real device** (sim unsupported here)          |
+| Target                             | iOS **Simulator** only                           | **Simulator and real device**                   |
 | DOM / computed style               | ❌ (accessibility tree only)                     | ✅ `getComputedStyle` / `getBoundingClientRect` |
 | Arbitrary JS eval                  | ❌                                               | ✅                                              |
 | In-page navigation                 | tap/swipe by coordinate or a11y                  | JS (`scrollTo` / `click` / set `value`)         |
@@ -17,8 +17,15 @@ These two tracks target different things and surface different information. They
 - **Web / WebView content** — layout, CSS, computed styles, DOM state, JS behavior → **B (this skill).** Navigate within the page with JS too.
 - **The native flow to _reach_ a WebView**, system permission dialogs, switching apps → **A** (`launch_app` / `ui_tap`).
 - **Visual regression** — how it actually renders in pixels → **A** (`screenshot` / `record_video`). Layout _numbers_ come from B; _pixels_ come from A.
-- **Stuck on a simulator with no real device** → iwdp can't attach to the sim, so B is out. Fall back to **A**'s `ui_describe_all` (a11y tree) as a rough inspection stand-in — you get labels and frames, but no computed style.
-- **Native interaction + DOM inspection on one device simultaneously** → in theory attach raw `idb` to a real device alongside iwdp, but `idb`'s native instrumentation requires **iOS 16+ Developer Mode** (a friction the iwdp / Web Inspector path here does NOT have — it only needs USB pairing/Trust) and this combo is unverified. Doing it on a simulator would need iwdp to see the sim, which is the current blocker.
+- **Only a simulator, no real device** → still **B**. Point iwdp at the simulator's `webinspectord_sim` socket with `-s` and everything above works — DOM, computed style, JS eval, app WKWebViews. `scripts/targets.mjs` finds the socket; SKILL.md steps 0–2 have the flow.
+- **Native interaction + DOM inspection on one target simultaneously** → **A + B together.** On a simulator this needs nothing special from iwdp's side; the only friction is A's, since `ui_*` needs the idb companion installed (`spawn idb ENOENT` if it isn't — `simctl`-backed calls like `screenshot` and `launch_app` still work without it). On a real device, `idb`'s native instrumentation also requires **iOS 16+ Developer Mode**, a friction the iwdp / Web Inspector path does NOT have — it only needs USB pairing/Trust.
+
+## Choosing between a simulator and a real device
+
+B reaches both, so when both are available it's a real choice — and the wrong one is silent, since a simulator returns plausible layout numbers for a bug that only exists on hardware. **Ask the user which one the page is on rather than deciding for them** (SKILL.md step 0). Rules of thumb for advising them:
+
+- **Simulator is fine** for layout/CSS, computed styles, DOM state, and most JS behavior — it runs the same WebKit.
+- **Real device is required** for anything hardware- or shell-dependent: the actual Safari chrome and its collapsing address bar, `visualViewport` behavior under the software keyboard, safe-area insets on a specific model, touch/gesture handling, performance figures, and camera/sensor-backed APIs.
 
 ## Why this skill exists at all
 
