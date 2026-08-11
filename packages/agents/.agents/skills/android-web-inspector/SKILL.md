@@ -31,8 +31,8 @@ So this skill is thin on purpose. It owns the two layers CDP cannot reach: the *
 
 iOS has two; Android has three. Hold all three in your head, because each fails differently:
 
-1. **adb link (control).** USB cable or wireless pairing. Everything below rides on it. `adb devices -l` must show `device`, not `unauthorized` or nothing.
-2. **CDP forward (inspection).** `adb forward tcp:9222 localabstract:chrome_devtools_remote` maps the in-device debug socket to a host port. Without it there is nothing to attach to.
+1. **adb link (control).** USB cable, or wireless via `adb tcpip` / a pairing code. Everything below rides on it. `adb devices -l` must show `device`, not `unauthorized` or nothing.
+2. **CDP forward (inspection).** `adb forward tcp:9333 localabstract:chrome_devtools_remote` maps the in-device debug socket to a host port. Without it there is nothing to attach to.
 3. **App reach (page load).** Separately, the device's browser must be able to **load** your dev server. The emulator reaches the host at `10.0.2.2`; a physical device needs `adb reverse` (or a LAN/tailnet address). This is orthogonal to 1 and 2 — inspection can be perfectly healthy while the page shows "이 사이트에 연결할 수 없음".
 
 ## Critical gotchas
@@ -42,7 +42,7 @@ Internalize these before starting — each one has produced a wrong conclusion i
 1. **Only the foreground tab is drivable.** In a background tab `click` reports success but focuses nothing, and its `visualViewport` numbers are **stale** (a background tab read `innerHeight 837` while the foreground one read `809`). `document.visibilityState` is *not* a reliable discriminator — both tabs reported `"visible"`. Confirm which page is foreground the way step 4 describes, and never measure from a background tab.
 2. **`take_screenshot` is effectively broken here** — 1 success in 5 attempts, the rest timed out. Use `adb exec-out screencap -p`, which is also the **only** way to see the IME, the browser chrome, and system UI. CDP screenshots capture the page and nothing else, so they can't show you the keyboard you're debugging.
 3. **An emulator shows no soft keyboard by default** — it maps your Mac's hardware keyboard instead, so focusing an input changes nothing. `adb shell settings put secure show_ime_with_hard_keyboard 1` is a precondition for any keyboard work, not a tweak.
-4. **The forward port is per-device, and may already be taken.** Two devices need two ports (9222, 9223). `9222` is also a popular default for other debugging tools, so check it's free (`lsof -nP -iTCP:9222 -sTCP:LISTEN`) and forward to another port if it isn't — the number only has to agree between `adb forward` and `--browserUrl`.
+4. **Don't forward to `9222` — you'd break iOS debugging silently.** The port number only has to agree between `adb forward` and `--browserUrl`, so it's free to move: default to **9333**, and give a second device 9334. `9222` is `ios-webkit-debug-proxy`'s default too, and the collision is one-directional and invisible. iwdp binds the wildcard `*:9222`; `adb forward` binds the specific `127.0.0.1:9222`; BSD sockets deliver to the specific bind. So **adb wins, Android keeps working perfectly, and every iOS request lands on your Android tabs** — both endpoints serve Chrome-shaped JSON, so nothing errors and the two page lists look alike. Avoid 9222 even on an iOS-free day: forwards **outlive the session that made them**, so a zombie `tcp:9222` from last week is enough to break someone's iPhone session today. Check what you're about to take with `lsof -nP -iTCP:<port> -sTCP:LISTEN`.
 5. **The CLI daemon is a singleton per user** unless you scope it. Plain `chrome-devtools start` **kills** whatever daemon was running, including one you had pointed at desktop Chrome. Always pass `--sessionId` (see step 3).
 
 ## Workflow
@@ -54,7 +54,7 @@ adb devices -l          # must print `device`, not `unauthorized`
 brew install chrome-devtools-mcp   # provides the `chrome-devtools` binary
 ```
 
-`unauthorized` means the on-device "USB 디버깅을 허용하시겠습니까?" prompt is waiting — ask the user to tap 허용. For wireless pairing, and for developer-options prerequisites, see `references/connect.md`.
+`unauthorized` means the on-device "USB 디버깅을 허용하시겠습니까?" prompt is waiting — ask the user to tap 허용. To go wireless — `adb tcpip` when a cable can go in once, a pairing code when it can't — and for developer-options prerequisites, see `references/connect.md`.
 
 Doing keyboard work? Enable the soft keyboard now (gotcha 3), and keep the screen awake:
 
@@ -65,17 +65,24 @@ adb -s <serial> shell svc power stayon true
 
 ### 1. Bridge the CDP socket
 
-Find what's actually debuggable, then forward it:
+Start by clearing what a previous session left behind. Forwards survive the shell, the agent, and the reboot of everything except the adb server, so `--list` is rarely empty and rarely all yours:
+
+```bash
+adb forward --list                        # every mapping, all devices
+adb -s <serial> forward --remove tcp:<port>   # drop each one you don't need — especially tcp:9222
+```
+
+Then find what's actually debuggable, and forward it to **9333** (not 9222 — gotcha 4):
 
 ```bash
 adb -s <serial> shell 'cat /proc/net/unix | grep -i devtools'
 # @chrome_devtools_remote                  → Chrome
 # @webview_devtools_remote_<pid>           → an app's inspectable WebView
-adb -s <serial> forward tcp:9222 localabstract:chrome_devtools_remote
-curl -s http://127.0.0.1:9222/json/version   # → {"Android-Package":"com.android.chrome", ...}
+adb -s <serial> forward tcp:9333 localabstract:chrome_devtools_remote
+curl -s http://127.0.0.1:9333/json/version   # → {"Android-Package":"com.android.chrome", ...}
 ```
 
-Empty grep = the browser isn't running, or USB debugging for it is off. One port per device — `references/connect.md` covers multi-device and WebView sockets.
+Empty grep = the browser isn't running, or USB debugging for it is off. One port per device — `references/connect.md` covers multi-device and WebView sockets. Tear your forward down when you're done (`adb -s <serial> forward --remove tcp:9333`); leaving it is how the next person inherits a port they can't explain.
 
 ### 2. Make the device reach your dev server
 
@@ -94,10 +101,10 @@ adb -s <serial> shell am start -a android.intent.action.VIEW \
 ### 3. Attach the CLI — always scoped
 
 ```bash
-chrome-devtools start --sessionId android --browserUrl http://127.0.0.1:9222
+chrome-devtools start --sessionId android --browserUrl http://127.0.0.1:9333
 ```
 
-`--sessionId` is undocumented (`hidden: true` in the CLI, found by reading the source) but load-bearing: it gives this daemon its own socket (`/tmp/chrome-devtools-mcp-android-<uid>.sock`), so an Android daemon and a desktop one coexist instead of evicting each other. Use a distinct id per device (`--sessionId phone --browserUrl http://127.0.0.1:9223`). **Pass the same `--sessionId` to every subsequent command.**
+`--sessionId` is undocumented (`hidden: true` in the CLI, found by reading the source) but load-bearing: it gives this daemon its own socket (`/tmp/chrome-devtools-mcp-android-<uid>.sock`), so an Android daemon and a desktop one coexist instead of evicting each other. Use a distinct id per device (`--sessionId phone --browserUrl http://127.0.0.1:9334`). **Pass the same `--sessionId` to every subsequent command.**
 
 Stop it when you're done: `chrome-devtools stop --sessionId android`.
 
@@ -159,7 +166,7 @@ An app built with `WebView.setWebContentsDebuggingEnabled(true)` (debug/alpha bu
 
 ## Reference
 
-- `references/connect.md` — wireless pairing, multi-device ports, `adb reverse` vs LAN, WebView sockets, port collisions.
+- `references/connect.md` — going wireless (`adb tcpip` vs pairing code), multi-device ports, `adb reverse` vs LAN, WebView sockets, stale forwards and the iwdp port collision.
 - `references/interaction.md` — a11y clicks, IME control, tap calibration, screenshots, gestures, typing.
 - `references/troubleshooting.md` — `unauthorized`, empty socket list, daemon timeouts, stale measurements.
 - `references/tool-selection.md` — why not the chrome-devtools MCP, and where the boundary with other platforms' tooling falls.

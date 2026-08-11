@@ -14,7 +14,7 @@ Cable, developer options, or the adb server. In order:
 adb kill-server && adb start-server && adb devices -l
 ```
 
-If still empty: confirm **Developer options → USB debugging** is on, try another cable/port, and for a wireless device re-run `adb connect <ip>:<port>` (pairing persists; the connection doesn't).
+If still empty: confirm **Developer options → USB debugging** is on, try another cable/port, and for a wireless device re-run `adb connect <ip>:<port>` — the device-side state (a pairing, or adbd's TCP mode) survives; the host's connection doesn't.
 
 ## `/proc/net/unix | grep devtools` is empty
 
@@ -22,26 +22,37 @@ Nothing is publishing a debug socket. For Chrome, it isn't running — launch it
 
 Note `@stetho_*_devtools_remote` sockets are a different protocol and won't work as a CDP endpoint.
 
-## `curl :9222/json/version` → connection refused
+## `curl :9333/json/version` → connection refused
 
 The forward isn't there, or it was wiped. Re-run:
 
 ```bash
 adb -s <serial> forward --list
-adb -s <serial> forward tcp:9222 localabstract:chrome_devtools_remote
+adb -s <serial> forward tcp:9333 localabstract:chrome_devtools_remote
 ```
 
-Forwards are lost on `adb kill-server`, on a device replug, and on a wireless reconnect (the serial changes, so old `-s` mappings don't apply).
+Forwards are lost on `adb kill-server`, on a device replug, and on a wireless reconnect (the serial changes, so old `-s` mappings don't apply). Nothing else clears them — a mapping you don't recognize in `--list` is a leftover, not a sign of something running.
 
 ## `curl` works but the CLI can't attach
 
-Something other than your forward is probably answering on that port — `9222` is a popular default and other debugging tools claim it too:
+Something other than your forward is probably answering on that port — plenty of debug bridges claim ports in this range:
 
 ```bash
-lsof -nP -iTCP:9222 -sTCP:LISTEN
+lsof -nP -iTCP:9333 -sTCP:LISTEN
 ```
 
-If the listener isn't `adb`, forward to a free port instead and start the daemon against that one (`adb forward tcp:9232 ...` + `--browserUrl http://127.0.0.1:9232`). Moving yourself is usually cheaper than restarting the occupant.
+If the listener isn't `adb`, forward to a free port instead and start the daemon against that one (`adb forward tcp:9336 ...` + `--browserUrl http://127.0.0.1:9336`). Moving yourself is usually cheaper than restarting the occupant.
+
+## Android works, but a colleague's (or your own) iOS session sees Android tabs
+
+You forwarded to `9222` and `ios-webkit-debug-proxy` was running. adb's `127.0.0.1:9222` bind shadows iwdp's `*:9222`, so iOS requests get answered by Android Chrome with no error on either side. Android never notices. Release it and move:
+
+```bash
+adb forward --remove tcp:9222
+adb -s <serial> forward tcp:9333 localabstract:chrome_devtools_remote
+```
+
+Full mechanism in `references/connect.md`. The forward may not even be from this session — they persist.
 
 ## `Timeout waiting for daemon response`
 
@@ -54,7 +65,7 @@ If the daemon itself is wedged:
 
 ```bash
 chrome-devtools stop --sessionId android
-chrome-devtools start --sessionId android --browserUrl http://127.0.0.1:9222
+chrome-devtools start --sessionId android --browserUrl http://127.0.0.1:9333
 ```
 
 ## The desktop chrome-devtools daemon disappeared

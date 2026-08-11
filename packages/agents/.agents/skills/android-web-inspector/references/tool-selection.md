@@ -23,7 +23,7 @@ An MCP server's arguments are fixed at session start. Redirecting it at Android 
 
 Adding a *second* always-on entry for Android doesn't hold up either:
 
-- **The port isn't stable.** `--browserUrl` would be hardcoded, but the forward port is per-device (9222, 9223, …), and `9222` is a popular enough default that it's often already claimed.
+- **The port isn't stable.** `--browserUrl` would be hardcoded, but the forward port is per-device (9333, 9334, …) and has to dodge whatever else is listening — `9222` in particular is off-limits, since taking it silently hijacks `ios-webkit-debug-proxy` (SKILL.md gotcha 4).
 - **The ordering is backwards.** MCP servers start with the session; `adb forward` happens later, when you decide to debug. The entry is always racing the plumbing.
 - **The tool namespace doubles.** ~28 near-identical tools twice over, distinguished only by prefix. The failure mode is silent and bad: measuring in headless desktop Chrome and reporting it as Android. `dpr 2.625` looks plausible either way.
 - **It runs everywhere.** Most sessions have no device attached.
