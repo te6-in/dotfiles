@@ -34,7 +34,7 @@ Run every step in order. Never push and never delete the backup automatically.
 
 `$BASE`, `$FORK` and `$BACKUP` name values you carry between steps, **not shell variables** — every command runs in a fresh shell, so a `BACKUP=…` assigned in step 3 is gone by step 5. Record the resolved hash or branch name as you compute it and substitute the literal into later commands; re-deriving `$BACKUP` from a wildcard listing picks the wrong branch as soon as two backups exist.
 
-**Always track this with a todo list.** Before step 0, create one todo item per numbered step below (0–7). Mark each item in-progress when you start it and completed when it's done — never batch them at the end. Keep all eight even for a one-commit retarget: the visible checklist is what stops a step being skipped, and step 6 is the one most worth not skipping. What should scale with the size of the job is the *reporting* — a single commit that replayed with no conflicts deserves one line for steps 4 and 5, not a walkthrough.
+**A small job doesn't earn fewer steps.** All eight below apply to a one-commit retarget exactly as they do to a twenty-commit one, and step 6 is the one most worth not skipping. What should scale with the size of the job is the *reporting* — a single commit that replayed with no conflicts deserves one line for steps 4 and 5, not a walkthrough.
 
 ## 0. Preconditions
 
