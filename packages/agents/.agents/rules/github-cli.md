@@ -16,7 +16,7 @@ One gotcha worth calling out: PR inline review comments don't show up in `gh pr 
 
 ## Pull Requests
 
-When creating a PR, use the repository's **default branch** as the base branch. Always look it up — the `Main branch` line in the session's git status is a guess, not the answer.
+When creating a PR, use the repository's **default branch** as the base branch. Always look it up — the `Main branch` line in the session's git status is a guess, not the answer. One exception: when this branch sits on another branch that has its own open PR, base it on that branch instead — that's a stacked PR, and targeting the default branch would put the parent's commits in this diff.
 
 ```sh
 git symbolic-ref --short refs/remotes/origin/HEAD   # → origin/dev
@@ -32,7 +32,22 @@ After creating a PR, always report it to the user in this format:
 
 Example: `[owner/repo#1234](https://github.com/owner/repo/pull/1234) (main ← fix/some-bug)`
 
-If a related Linear issue exists, mention it as well — the Linear mention rule will add the link automatically.
+In a repo that tracks its work in Linear, name the related issue in that report too, as a markdown link. That's the report only — the PR itself carries no issue ID. Where Linear isn't in play, say nothing about it either way.
+
+### Keeping the title current
+
+A title is written once and then goes stale on its own — scope grows after review, a retarget moves part of the diff into the base. Nobody notices, because the title is the one part of a PR that never shows up in a diff. And it isn't only a label: the squash merge below takes it as the commit subject, so a stale one lands on the default branch for good.
+
+So after pushing to a branch that already has an open PR, check the title against what the branch now does:
+
+```sh
+gh pr view --json number,title   # exits non-zero when the branch has no PR
+git log --oneline origin/<base>..HEAD
+```
+
+That's one call either way, so the check costs the same whether a PR exists or not.
+
+When the title no longer covers the work, don't retitle silently — it notifies everyone on the PR. Ask the user, putting the proposed title in the question, then apply it with `gh pr edit <number> --title "..."`. Title only; the body stays empty, as above.
 
 ## Merging Pull Requests
 
