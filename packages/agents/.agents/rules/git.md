@@ -1,5 +1,5 @@
 ---
-description: Git conventions on this machine — how repos are cloned and where they live.
+description: Git conventions on this machine — how commits are written and split, how repos are cloned, and where they live.
 trigger: always_on
 glob:
 ---
@@ -7,6 +7,12 @@ glob:
 # Git
 
 `git` is NOT wrapped with `op plugin run --` — it authenticates over SSH, so 1Password has nothing to route and the wrapper only adds a pointless auth prompt. Run `git push`, `git clone`, etc. plain.
+
+## Committing
+
+Match the repo, not your habits. Read what's already there — `git log --oneline -20` — and write in the same language and the same format those messages use. It's a per-repo convention, and the log is the only place it's written down. PR titles follow the same log, for the same reason.
+
+Split the work into 2+ commits when it covers more than one thing — a message that needs an "and" is usually two commits.
 
 ## Clone over SSH
 

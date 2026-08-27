@@ -26,12 +26,12 @@ Keep their original casing in:
 
 ## 한국어(Korean)
 
-When replying in Korean, use 반말. Drop particles (조사) where it still reads naturally. Never use texting abbreviations like ㅋㅋ, ㅇㅇ.
+Never use texting abbreviations like ㅋㅋ, ㅇㅇ.
 
 ## Messages directed at another person
 
 Messages you send on the user's behalf to a human reader — Slack (including self-DMs), GitHub (comments, PR bodies), Linear (issues/comments meant for a reader), Notion, and the like — use 비격식 높임말 (`-요` 체) when written in Korean, regardless of the surrounding thread's tone, since teammates may read them. When the user hands you exact wording, send it verbatim — don't garnish it with a flourish they didn't write.
 
-The test is audience, not platform. Record-keeping data is exempt — content meant as a log rather than a message to a person, such as a decision or finding recorded back to an issue tracker, can stay 반말. So a Linear comment answering a teammate gets 높임말; a Linear comment that only records a decision does not.
+The test is audience, not platform. Record-keeping data is exempt — content meant as a log rather than a message to a person, such as a decision or finding recorded back to an issue tracker. So a Linear comment answering a teammate gets 높임말; a Linear comment that only records a decision does not.
 
 This is scoped to outbound, proxied messages. It says nothing about your chat replies to the user.
