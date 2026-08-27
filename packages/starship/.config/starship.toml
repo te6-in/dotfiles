@@ -191,10 +191,6 @@ gauge_width = 7
 
 [[claude_context.display]]
 threshold = 0.0
-hidden = true
-
-[[claude_context.display]]
-threshold = 0.01
 style = 'success'
 hidden = false
 
