@@ -1,0 +1,67 @@
+#!/bin/sh
+# showqr — render a string as a QR code, in the terminal or as an image.
+#
+# usage: showqr [--text|--png] [--] STRING...
+#
+# why the rendering isn't fixed:
+#   Which encoding actually scans depends on who is looking. A terminal draws half-block
+#   glyphs fine, and ANSIUTF8 names its colours outright so the terminal's own palette
+#   can't invert the modules. An agent's shell is not a terminal: it strips the ESC byte
+#   out of every colour code, which unpicks the light and dark modules the code is made
+#   of, leaving a block of literal "[40;37;1m" in place of a QR. So off a terminal this
+#   writes a PNG and opens it in a viewer instead, and the default is picked from whether
+#   stdout is a tty.
+#
+#   The --text fallback for that case is UTF8i, not UTF8: without colour codes qrencode
+#   paints dark modules in the foreground colour, which a dark theme renders light and so
+#   inverts the code. macOS reports the theme through AppleInterfaceStyle.
+
+set -eu
+
+self=${0##*/}
+mode=auto
+
+die() { printf '%s: %s\n' "$self" "$1" >&2; exit 1; }
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        --text) mode=text ;;
+        --png) mode=png ;;
+        --) shift; break ;;
+        -h|--help) printf 'usage: %s [--text|--png] [--] STRING...\n' "$self" >&2; exit 2 ;;
+        -*) die "unknown option: $1" ;;
+        *) break ;;
+    esac
+    shift
+done
+
+[ $# -gt 0 ] || die "no string to encode"
+command -v qrencode >/dev/null 2>&1 || die "qrencode is required"
+
+if [ "$mode" = auto ]; then
+    if [ -t 1 ]; then mode=text; else mode=png; fi
+fi
+
+if [ "$mode" = text ]; then
+    if [ -t 1 ]; then
+        type=ANSIUTF8
+    elif defaults read -g AppleInterfaceStyle >/dev/null 2>&1; then
+        type=UTF8i
+    else
+        type=UTF8
+    fi
+    for s in "$@"; do
+        qrencode -t "$type" -m 2 -- "$s"
+    done
+    exit 0
+fi
+
+tmp=${TMPDIR:-/tmp}
+n=0
+for s in "$@"; do
+    n=$((n + 1))
+    png=${tmp%/}/showqr-$n.png
+    qrencode -o "$png" -s 8 -m 2 -- "$s"
+    printf 'QR image: %s\n' "$png" >&2
+    open "$png"
+done

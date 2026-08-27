@@ -1,0 +1,201 @@
+#!/bin/sh
+# portless proxy daemon — keeps the portless proxy on privileged port 80 across reboots.
+#
+# usage: portless-proxy-service [status|install|uninstall] [-p port] [--tld tld]
+#
+# why this exists:
+#   `portless service install` bakes into the plist the node binary it happens to be
+#   running from, which under Homebrew is a versioned Cellar path
+#   (/opt/homebrew/Cellar/node/26.5.0_1/bin/node). The next `brew upgrade node` deletes
+#   that path and the daemon can no longer exec: nothing holds port 80, so the next
+#   `portless run` quietly auto-starts an unprivileged proxy on a high port bound to
+#   127.0.0.1 only. The machine itself keeps working, so the breakage only shows up as
+#   phones, emulators, and teammates losing every URL at once.
+#
+#   This writes the same daemon, but execs the `portless` launcher
+#   ($(brew --prefix)/bin/portless) rather than a node binary. That launcher is a symlink
+#   Homebrew repoints on every portless upgrade, and its shebang already reads
+#   /opt/homebrew/opt/node/bin/node — the version-independent node symlink. Neither hop
+#   carries a version, so the daemon survives node and portless upgrades alike.
+#
+# the daemon is portless's own proxy under portless's own label, so `portless list`,
+# `portless doctor`, and `portless proxy stop` keep working unchanged. Running
+# `portless service install` again would overwrite this plist and reintroduce the
+# Cellar path.
+
+set -e
+
+LABEL="sh.portless.proxy"
+PLIST="/Library/LaunchDaemons/$LABEL.plist"
+PORT=80
+TLD=""
+
+usage() {
+    echo "usage: portless-proxy-service [status|install|uninstall] [-p port] [--tld tld]" >&2
+    exit 2
+}
+
+cmd="status"
+case ${1-} in
+    status | install | uninstall) cmd=$1; shift ;;
+    -p | --port | --tld) ;;
+    "") ;;
+    *) usage ;;
+esac
+while [ $# -gt 0 ]; do
+    case $1 in
+        -p | --port) shift; PORT=${1-} ;;
+        --tld) shift; TLD=${1-} ;;
+        *) usage ;;
+    esac
+    [ $# -gt 0 ] && shift
+done
+[ -n "$PORT" ] || usage
+
+# The daemon runs as root but has to keep the invoking user's state directory: that is
+# where portless writes routes.json, and where every `portless run` looks for the proxy.
+user=${SUDO_USER:-$(id -un)}
+if [ "$user" = "$(id -un)" ]; then
+    home=$HOME
+else
+    home=$(dscl . -read "/Users/$user" NFSHomeDirectory 2>/dev/null | awk '{print $2}')
+fi
+[ -n "$home" ] || {
+    echo "portless-proxy-service: cannot resolve home directory for $user" >&2
+    exit 1
+}
+state="$home/.portless"
+
+require_root() {
+    [ "$(id -u)" -eq 0 ] || {
+        echo "portless-proxy-service: $cmd needs root (port $PORT is privileged)" >&2
+        echo "  sudo portless-proxy-service $cmd" >&2
+        exit 1
+    }
+}
+
+case $cmd in
+    status)
+        if launchctl print "system/$LABEL" >/dev/null 2>&1; then
+            echo "daemon: loaded ($LABEL)"
+        else
+            echo "daemon: not loaded"
+        fi
+
+        if [ -f "$PLIST" ]; then
+            program=$(awk '/<array>/ {a = 1; next} a && /<string>/ {gsub(/.*<string>|<\/string>.*/, ""); print; exit}' "$PLIST")
+            echo "program: $program"
+            [ -x "$program" ] || echo "  BROKEN: not executable — sudo portless-proxy-service install"
+            # The regression this script exists for: an interpreter pinned to a Cellar
+            # path that a later `brew upgrade` removed.
+            interp=$(sed -n '1s/^#!//p' "$program" 2>/dev/null | cut -d' ' -f1)
+            if [ -n "$interp" ] && [ ! -x "$interp" ]; then
+                echo "  BROKEN: interpreter $interp is gone — sudo portless-proxy-service install"
+            fi
+        else
+            echo "program: no plist at $PLIST"
+        fi
+
+        # -n keeps lsof from stalling on reverse DNS. Root-owned listeners stay hidden
+        # unless this runs under sudo, so nothing printed here is not proof of absence.
+        lsof -nP -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null |
+            awk 'NR > 1 {print "listening: " $9 "  (" $1 ", pid " $2 ")"}'
+
+        if [ -f "$state/proxy.port" ]; then
+            running=$(cat "$state/proxy.port")
+            echo "state: proxy.port = $running"
+            [ "$running" = "$PORT" ] ||
+                echo "  WARN: apps register against port $running, which no device can reach"
+        fi
+        ;;
+
+    install)
+        require_root
+        portless=$(command -v portless) || {
+            echo "portless-proxy-service: portless not found (brew install portless)" >&2
+            exit 1
+        }
+        # Read back the TLD portless last ran with, so a reinstall cannot silently swap
+        # the issued domain for portless's .localhost default. sudo drops PORTLESS_TLD.
+        [ -n "$TLD" ] || TLD=${PORTLESS_TLD:-$(cat "$state/proxy.tld" 2>/dev/null || true)}
+        [ -n "$TLD" ] || {
+            echo "portless-proxy-service: no TLD known — pass --tld <tld>" >&2
+            exit 1
+        }
+
+        launchctl bootout "system/$LABEL" 2>/dev/null || true
+
+        # An unprivileged proxy left on a high port keeps its port in proxy.port, and
+        # every `portless run` builds its URL from that — so routes would stay
+        # loopback-only even once this daemon holds port 80.
+        stray=$(cat "$state/proxy.pid" 2>/dev/null || true)
+        if [ -n "$stray" ] && kill -0 "$stray" 2>/dev/null; then
+            kill "$stray" 2>/dev/null || true
+            echo "stopped unprivileged proxy (pid $stray)"
+        fi
+
+        cat > "$PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>$LABEL</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>$portless</string>
+		<string>proxy</string>
+		<string>start</string>
+		<string>--foreground</string>
+		<string>--port</string>
+		<string>$PORT</string>
+		<string>--no-tls</string>
+		<string>--tld</string>
+		<string>$TLD</string>
+		<string>--skip-trust</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PORTLESS_STATE_DIR</key>
+		<string>$state</string>
+		<key>PORTLESS_PORT</key>
+		<string>$PORT</string>
+		<key>PORTLESS_HTTPS</key>
+		<string>0</string>
+		<key>PORTLESS_LAN</key>
+		<string>0</string>
+		<key>PORTLESS_WILDCARD</key>
+		<string>0</string>
+		<key>PORTLESS_TLD</key>
+		<string>$TLD</string>
+		<key>HOME</key>
+		<string>$home</string>
+		<key>SUDO_UID</key>
+		<string>$(id -u "$user")</string>
+		<key>SUDO_GID</key>
+		<string>$(id -g "$user")</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>$state/service.log</string>
+	<key>StandardErrorPath</key>
+	<string>$state/service.log</string>
+</dict>
+</plist>
+EOF
+        chown root:wheel "$PLIST"
+        chmod 644 "$PLIST"
+        launchctl bootstrap system "$PLIST"
+        echo "installed: 127.0.0.1:$PORT (.$TLD) via $portless, state $state"
+        ;;
+
+    uninstall)
+        require_root
+        launchctl bootout "system/$LABEL" 2>/dev/null || true
+        rm -f "$PLIST"
+        echo "uninstalled: $LABEL"
+        ;;
+esac

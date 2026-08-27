@@ -1,0 +1,180 @@
+#!/bin/sh
+# deeplink — wrap a URL in an app deep link, print it, and open it on a target.
+#
+# usage: deeplink [view] --url URL [--simulator[=UDID]] [--adb[=SERIAL]] [--qr[=text|png]]
+#                       [--adb-package PKG]
+#        deeplink --list
+#
+# why this exists:
+#   Opening a dev server inside a host app means percent-encoding the whole address into
+#   one query parameter of a private scheme. Written inline that is unreadable, repeated
+#   once per (view x target) pair, and a partly encoded link still parses — the app just
+#   shows a blank screen.
+#
+#   The schemes are not in this repo. They live in the JSON named by $DEEPLINK_CONFIG
+#   (default ~/.config/deeplink/deeplinks.local.json), gitignored, so a private URL scheme
+#   never reaches a public commit. deeplinks.json.example has the shape.
+#
+#   Finding the address is the caller's job, not this script's: pass --url "$(plurl)" for
+#   the portless route serving a directory, --url "$(portless get NAME)" for a named one,
+#   or any address at all. Both the shell abbreviations and the open-deeplink agent skill
+#   call this, so the scheme, the encoding, and the several-devices-attached case each
+#   exist once.
+
+set -eu
+
+self=${0##*/}
+config=${DEEPLINK_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/deeplink/deeplinks.local.json}
+
+die() { printf '%s: %s\n' "$self" "$1" >&2; exit 1; }
+
+usage() {
+    cat >&2 <<'USAGE'
+usage: deeplink [view] --url URL [--simulator[=UDID]] [--adb[=SERIAL]] [--qr[=text|png]]
+                      [--adb-package PKG]
+       deeplink --list
+
+  view                a key under "views" in the config; --list prints them, and the
+                      config's "default" applies when none is given
+  --url URL           the address to wrap. This script never looks one up — for a
+                      portless route pass --url "$(plurl)" or "$(portless get NAME)"
+  --simulator[=UDID]  open on a booted iOS Simulator. Simulators only: a USB-connected
+                      iPhone is not reachable this way, use --qr for one
+  --adb[=SERIAL]      open on an adb target, emulator and physical device alike
+  --qr[=text|png]     render the link as a QR code, for a phone's camera; showqr picks
+                      text on a terminal and a PNG elsewhere unless told which
+  --adb-package PKG   restrict the Android intent to one app package
+
+With no target flag the link is only printed. The link is always printed, whatever
+targets are given, so a launcher can never open something different from what you read.
+USAGE
+    exit 2
+}
+
+command -v jq >/dev/null 2>&1 || die "jq is required"
+[ -f "$config" ] || die "no config at $config — see deeplinks.json.example for the shape"
+
+list_views() {
+    printf 'views in %s\n' "$config"
+    jq -r '.views | to_entries[] | "\(.key)\t\(.value.description // "")"' "$config" \
+        | awk -F'\t' '{ printf "  %-10s %s\n", $1, $2 }'
+    d=$(jq -r '.default // ""' "$config")
+    [ -z "$d" ] || printf 'default: %s\n' "$d"
+}
+
+view=
+sim=0; sim_udid=
+adb=0; adb_serial=
+qr=0; qr_mode=auto
+url=; package=
+
+[ $# -gt 0 ] || usage
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        --list) list_views; exit 0 ;;
+        --simulator) sim=1 ;;
+        --simulator=*) sim=1; sim_udid=${1#--simulator=} ;;
+        --adb) adb=1 ;;
+        --adb=*) adb=1; adb_serial=${1#--adb=} ;;
+        --qr) qr=1 ;;
+        --qr=*) qr=1; qr_mode=${1#--qr=} ;;
+        --url) shift; [ $# -gt 0 ] || die "--url needs a value"; url=$1 ;;
+        --url=*) url=${1#--url=} ;;
+        --adb-package) shift; [ $# -gt 0 ] || die "--adb-package needs a value"; package=$1 ;;
+        --adb-package=*) package=${1#--adb-package=} ;;
+        -h|--help) usage ;;
+        -*) die "unknown option: $1" ;;
+        *) [ -z "$view" ] || die "more than one view given: $view, $1"; view=$1 ;;
+    esac
+    shift
+done
+
+[ -n "$url" ] || die "--url is required"
+
+if [ -z "$view" ]; then
+    view=$(jq -r '.default // ""' "$config")
+    [ -n "$view" ] || die "no view given, and the config names no default — try --list"
+fi
+jq -e --arg v "$view" '.views | has($v)' "$config" >/dev/null \
+    || die "no view named $view — try --list"
+
+tmpl=$(jq -r --arg v "$view" '.views[$v].template // ""' "$config")
+[ -n "$tmpl" ] || die "view $view has no template"
+
+encoded=$(jq -rn --arg s "$url" '$s|@uri')
+link=$(jq -rn --arg t "$tmpl" --arg u "$encoded" --arg r "$url" \
+    '$t | gsub("\\{url\\}"; $u) | gsub("\\{raw_url\\}"; $r)')
+
+# The link is always shown: a launcher takes over the screen without a word, and a link
+# built wrong looks identical to one built right. stderr keeps it out of a caller's $().
+# Bold only on a terminal, since an agent's shell drops the ESC byte and leaves "[1m".
+show() {
+    if [ -t 2 ]; then
+        printf '\033[1m%s\033[0m\n' "$1" >&2
+    else
+        printf '%s\n' "$1" >&2
+    fi
+}
+
+pick_simulator() {
+    rows=$(xcrun simctl list devices booted -j \
+        | jq -r '.devices | to_entries[] | .value[] | "\(.udid)  \(.name)"')
+    n=$(printf '%s\n' "$rows" | grep -c . || true)
+    case $n in
+        0) die "no booted iOS Simulator — boot one first" ;;
+        1) printf '%s\n' "$rows" | cut -d' ' -f1 ;;
+        *) printf '%s: %s booted simulators — name one with --simulator=UDID:\n' "$self" "$n" >&2
+           printf '%s\n' "$rows" | sed 's/^/  /' >&2
+           exit 1 ;;
+    esac
+}
+
+pick_adb() {
+    rows=$(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')
+    n=$(printf '%s\n' "$rows" | grep -c . || true)
+    case $n in
+        0) die "no adb target attached — start an emulator or plug a device in" ;;
+        1) printf '%s\n' "$rows" ;;
+        *) printf '%s: %s adb targets — name one with --adb=SERIAL:\n' "$self" "$n" >&2
+           printf '%s\n' "$rows" | while read -r s; do
+               printf '  %s  %s\n' "$s" \
+                   "$(adb -s "$s" shell getprop ro.product.model 2>/dev/null | tr -d '\r')" >&2
+           done
+           exit 1 ;;
+    esac
+}
+
+if [ "$sim" -eq 0 ] && [ "$adb" -eq 0 ] && [ "$qr" -eq 0 ]; then
+    printf '%s\n' "$link"
+    exit 0
+fi
+
+# One link, one showing, however many targets follow.
+show "$link"
+
+if [ "$sim" -eq 1 ]; then
+    [ -n "$sim_udid" ] || { sim_udid=$(pick_simulator) || exit 1; }
+    xcrun simctl openurl "$sim_udid" "$link"
+fi
+
+if [ "$adb" -eq 1 ]; then
+    [ -n "$adb_serial" ] || { adb_serial=$(pick_adb) || exit 1; }
+    # The link is read by a shell on the device, so it is quoted twice — once here, once
+    # there. Percent-encoding leaves it no quote of its own to break out of.
+    if [ -n "$package" ]; then
+        adb -s "$adb_serial" shell am start -a android.intent.action.VIEW \
+            -d "'$link'" "$package"
+    else
+        adb -s "$adb_serial" shell am start -a android.intent.action.VIEW -d "'$link'"
+    fi
+fi
+
+if [ "$qr" -eq 1 ]; then
+    command -v showqr >/dev/null 2>&1 || die "showqr is required for --qr"
+    case $qr_mode in
+        auto) showqr -- "$link" ;;
+        text|png) showqr "--$qr_mode" -- "$link" ;;
+        *) die "--qr takes text, png, or auto — got $qr_mode" ;;
+    esac
+fi
