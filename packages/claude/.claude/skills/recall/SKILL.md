@@ -1,9 +1,20 @@
 ---
 name: recall
-description: Find past Claude Code sessions that discussed a given topic. Returns a summary of the matched conversation plus commands to jump back into that session. Invoke when the user asks you to "find", "recall", or "search" something from previous sessions, or says they vaguely remember talking about X and want to get back to it.
+description: >-
+  Find past Claude Code sessions on a given topic, keyword, or fragment by
+  grepping the local session transcripts under `~/.claude/projects/`, then
+  return a ranked digest of each match — a short summary of what that session
+  was about plus the exact `cd … && claude -r <id>` command that jumps back
+  into it. Invoke whenever the user refers to a past conversation with Claude
+  Code by content rather than by session ID: "find/recall/search" past work,
+  "previously / before / last time / 지난번에 / 예전에 ~ 얘기했던", vaguely
+  remembering discussing X with you and wanting to get back to it, or handing
+  over just a fragment — a Linear issue ID, a rough topic, a file name — and
+  asking which session covered it. Not for grepping the current codebase,
+  docs, or the ongoing conversation's own context — only past sessions on
+  disk. Reports only; never edits or resumes a session on the user's behalf.
 context: fork
 agent: Explore
-disable-model-invocation: true
 ---
 
 `$ARGUMENTS` is the topic, question, or context the user wants to recall from a past conversation. Examples: "Reshaped margin implementation research", "ABC-1234" (a Linear issue), "discussion about Figma integration".
