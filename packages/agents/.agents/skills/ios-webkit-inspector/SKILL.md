@@ -10,10 +10,10 @@ description: >-
   DevTools can't reproduce, reading exact box metrics or computed styles
   on-device, or verifying a CSS/JS fix live before committing — basically any
   "why does this look or act wrong on mobile Safari" or "inspect the iOS app's
-  WebView" task where you'd otherwise be stuck eyeballing screenshots. NOT for
+  WebView" task where you'd otherwise be stuck eyeballing screenshots. Not for
   iOS Simulator UI automation, native taps, launching apps, or pixel/visual
-  screenshots — use the ios-simulator tooling for those (see
-  references/tool-selection.md).
+  screenshots — this skill only drives web content on an iOS target over the
+  WebKit remote debugging protocol.
 ---
 
 # iOS Safari / WKWebView remote inspection

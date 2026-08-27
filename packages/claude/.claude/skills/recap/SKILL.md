@@ -40,8 +40,8 @@ conversation.
    the tail of the conversation.
 
 3. The past conversation is now in your context. Give the user a one-line handoff
-   in 한국어 반말 — e.g. `<N>개 세션 불러왔어. 어디서 이어갈까?` — and continue
-   from there. Don't re-summarize the transcript back at the user; they can read
+   — how many sessions were loaded, and where to pick up — and continue from
+   there. Don't re-summarize the transcript back at the user; they can read
    it, and the point was to load it into *your* context, not to produce a recap
    document.
 

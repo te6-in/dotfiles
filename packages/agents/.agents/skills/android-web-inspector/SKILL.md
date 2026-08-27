@@ -10,9 +10,9 @@ description: >-
   that only reproduces on a phone, anything involving the soft keyboard or
   `visualViewport` (Chrome panning, `offsetTop`, bottom address bar), reading
   exact box metrics on-device, or verifying a fix live on real hardware. Also
-  covers inspectable Android WebViews in debug app builds. NOT for desktop
-  Chrome (use the chrome-devtools MCP), native Android UI automation, or iOS —
-  see references/tool-selection.md.
+  covers inspectable Android WebViews in debug app builds. Not for desktop
+  Chrome, native Android UI automation, or iOS — this skill only drives web
+  content on an Android target over CDP.
 ---
 
 # Android Chrome / WebView remote inspection
