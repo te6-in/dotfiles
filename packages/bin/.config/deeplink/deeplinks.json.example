@@ -1,0 +1,9 @@
+{
+  "default": "webview",
+  "views": {
+    "webview": {
+      "description": "Open a URL inside the host app's web view",
+      "template": "myapp://web?url={url}"
+    }
+  }
+}
