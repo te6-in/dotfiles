@@ -1,0 +1,71 @@
+#!/bin/sh
+# plurl — print a portless URL: the route serving this directory, or a named one.
+#
+# usage: plurl [NAME]
+#
+# why the cwd match reads a pid instead of inferring a name:
+#   portless get needs a name and has no cwd fallback, and its inferProjectName
+#   (portless.json -> package.json -> git root -> directory name) is internal, so
+#   reimplementing that chain drifts from portless the moment it changes — and still
+#   can't tell two worktrees of one package apart, since the hostname prefix comes off
+#   the branch rather than the directory. portless list already prints a pid for every
+#   live route, and that process's cwd is the directory the dev server was started in,
+#   so matching $PWD against it is measurement, not inference: it cannot answer wrongly,
+#   only fail to answer. Alias routes carry no pid and never match, which is correct —
+#   a static route has no project directory.
+
+set -eu
+
+self=${0##*/}
+
+# With a name, defer to portless so worktree prefixing stays its job.
+[ $# -eq 0 ] || exec portless get "$@"
+
+listing=$(portless list 2>/dev/null || :)
+
+# "  http://app.tld  ->  localhost:4410  (pid 81535)" -> "81535 http://app.tld"
+pairs=$(printf '%s\n' "$listing" | sed -n -E \
+    's|^.*(https?://[^[:space:]]+)[[:space:]]+->[[:space:]]+[^[:space:]]+[[:space:]]+\(pid ([0-9]+)\).*$|\2 \1|p')
+
+if [ -n "$pairs" ]; then
+    # lsof -Fpn emits "p<pid>" for each process and "n<cwd>" for its cwd descriptor.
+    best=$(lsof -a -d cwd -p "$(printf '%s\n' "$pairs" | cut -d' ' -f1 | paste -sd, -)" -Fpn 2>/dev/null |
+        awk -v pwd="$PWD" -v map="$pairs" '
+            BEGIN {
+                n = split(map, lines, "\n")
+                for (i = 1; i <= n; i++)
+                    if (split(lines[i], f, " ") == 2) url[f[1]] = f[2]
+            }
+            /^p/ { pid = substr($0, 2); next }
+            /^n/ {
+                cwd = substr($0, 2)
+                if (cwd != pwd && index(pwd, cwd "/") != 1) next
+                # Deepest enclosing directory wins, so an app beats the monorepo above it.
+                if (length(cwd) > bestlen) { bestlen = length(cwd); best = url[pid] }
+            }
+            END { if (best != "") print best }
+        ')
+
+    if [ -n "$best" ]; then
+        printf '%s\n' "$best"
+        exit 0
+    fi
+fi
+
+urls=$(printf '%s\n' "$listing" | grep -o -E 'https?://[^[:space:]]+' || :)
+count=$(printf '%s' "$urls" | grep -c . || :)
+
+case $count in
+    0)
+        printf '%s: no portless routes are running\n' "$self" >&2
+        exit 1
+        ;;
+    1)
+        printf '%s\n' "$urls"
+        ;;
+    *)
+        printf '%s: %s routes running — name one:\n' "$self" "$count" >&2
+        printf '%s\n' "$urls" | sed 's/^/  /' >&2
+        exit 1
+        ;;
+esac
