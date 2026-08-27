@@ -1,6 +1,6 @@
 ---
 name: linear-read-issue
-description: Read a Linear issue and everything hanging off it — description, the full comment thread, one-hop relations, and every linked Slack thread, Notion document, Linear document, and GitHub PR — then hand back a short brief. Invoke whenever an issue's content is needed, whether the user named an issue ("ABC-1234 봐줘"), asked what an issue says, or a step in `linear-workflow` needs to know the issue before acting on it. Reads only; never writes to Linear.
+description: Read a Linear issue and everything hanging off it — description, the full comment thread, one-hop relations, and every linked Slack thread, Notion document, Linear document, and GitHub PR — then hand back a short brief. Invoke whenever an existing issue's content needs to be known before answering or acting: the user named an issue ("ABC-1234 봐줘"), asked what an issue says, referenced an issue URL, or a follow-up step is blocked on knowing what the issue actually says. Reads only; never writes to Linear.
 context: fork
 agent: Explore
 ---
@@ -83,8 +83,8 @@ gh pr view <n> --repo <owner/repo> --comments   # conversation tab
 gh api repos/<owner>/<repo>/pulls/<n>/comments  # inline review comments
 ```
 
-Both are needed: `--comments` does not include inline review comments. What
-matters is the review discussion — what got pushed back on, what got conceded.
+What matters is the review discussion — what got pushed back on, what got
+conceded.
 
 Stay out of the diff by default. Pull `gh pr diff` only when the discussion turns
 on a specific change and you can't tell what happened without it, and then only
@@ -96,10 +96,6 @@ Not a transcript. Someone who reads your output should be able to act on the
 issue without opening it.
 
 Write it in the issue's own language — these are usually Korean; don't translate.
-In Korean use 반말: this is a handoff to the calling agent, not a message to a
-person, so the 높임말 rule for outbound messages doesn't apply. Keep the
-model-name format `Claude {Family} {Version} {Variant}` if you refer to yourself.
-No emoji.
 
 ````markdown
 ## ABC-1234: <title>

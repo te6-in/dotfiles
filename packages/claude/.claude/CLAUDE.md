@@ -34,7 +34,7 @@ The Bash tool runs zsh (login, non-interactive — `~/.zshrc` is not sourced), d
 
 ## Linear
 
-Work repos — those whose git remote sits under one of the GitHub orgs in `$WORK_GITHUB_ORGS` — track their work in Linear. Run `echo $WORK_GITHUB_ORGS` if you need the list; unset means no repo is a work repo. In one of those, load the `linear-workflow` skill before your first code edit and follow it; it carries the issue-identification flow, status transitions, and the writing conventions. Load it too whenever you create or update a Linear issue.
+Work repos — those whose git remote sits under one of the GitHub orgs in `$WORK_GITHUB_ORGS` — track their work in Linear. Run `echo $WORK_GITHUB_ORGS` if you need the list; unset means no repo is a work repo. In one of those, load the `linear-workflow` skill before your first code edit and follow it; it carries the issue-identification flow, status transitions, and the writing conventions. Load it too whenever you create or update a Linear issue, and whenever a PR's status moves — created, marked ready for review, merged — because the issue may need identifying and transitioning even in a session that never edited code and so never learned which issue it belongs to.
 
 **To read an issue, use `linear-read-issue` instead** — it forks, reads the issue with its comments, relations, and linked Slack/Notion/PR content, and returns a brief, so none of that lands in this conversation. It stands alone: don't load `linear-workflow` first just to read something.
 
