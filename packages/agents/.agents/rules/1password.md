@@ -6,7 +6,7 @@ glob:
 
 # 1Password CLI
 
-Always wrap `wrangler` with `op plugin run --` so its authentication is routed through 1Password instead of relying on shell env vars or local config files:
+Always wrap `wrangler` with `op plugin run --`:
 
 - `wrangler` → `op plugin run -- wrangler ...`
 

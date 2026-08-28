@@ -1,0 +1,1 @@
+../../.agents/rules/mece.md

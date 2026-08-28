@@ -6,11 +6,9 @@ glob:
 
 # GitHub CLI
 
-`gh` authenticates via its own native login (`gh auth login`), NOT `op plugin run --`.
-
 ## Reading github.com links
 
-When given a `github.com` URL, read it with `gh` — never `WebFetch`. `gh` is authenticated, returns structured data, and works on private repos; `WebFetch` gets you a rendered HTML wrapper or a 404.
+When given a `github.com` URL, read it with `gh` — never `WebFetch`.
 
 One gotcha worth calling out: PR inline review comments don't show up in `gh pr view --comments` (that's only the conversation tab). Use `gh api repos/OWNER/REPO/pulls/N/comments` instead.
 
@@ -36,16 +34,12 @@ In a repo that tracks its work in Linear, name the related issue in that report 
 
 ### Keeping the title current
 
-A title is written once and then goes stale on its own — scope grows after review, a retarget moves part of the diff into the base. Nobody notices, because the title is the one part of a PR that never shows up in a diff. And it isn't only a label: the squash merge below takes it as the commit subject, so a stale one lands on the default branch for good.
-
-So after pushing to a branch that already has an open PR, check the title against what the branch now does:
+After pushing to a branch that already has an open PR, check the title against what the branch now does:
 
 ```sh
 gh pr view --json number,title   # exits non-zero when the branch has no PR
 git log --oneline origin/<base>..HEAD
 ```
-
-That's one call either way, so the check costs the same whether a PR exists or not.
 
 When the title no longer covers the work, don't retitle silently — it notifies everyone on the PR. Ask the user, putting the proposed title in the question, then apply it with `gh pr edit <number> --title "..."`. Title only; the body stays empty, as above.
 
