@@ -9,3 +9,8 @@
 # ~/.config/karabiner should be symlinked as a whole
 # see: https://karabiner-elements.pqrs.org/docs/manual/misc/configuration-file-path/
 packages/karabiner/.config/karabiner/automatic_backups
+
+# ~/.config/openlogi should be symlinked as a whole, so OpenLogi's backups, locks,
+# and agent socket land here too
+packages/openlogi/.config/openlogi/*
+!packages/openlogi/.config/openlogi/config.toml

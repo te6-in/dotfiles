@@ -154,3 +154,4 @@ stow -D -t ~ */          # everything
 ## Notes
 
 - `~/.config/karabiner` must be symlinked as a whole directory ([Docs](https://karabiner-elements.pqrs.org/docs/manual/misc/configuration-file-path/)).
+- `~/.config/openlogi` must be symlinked as a whole directory too. The OpenLogi GUI saves `config.toml` by renaming a temp file over it, which would replace a file-level symlink with a plain file.
