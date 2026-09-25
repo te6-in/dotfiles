@@ -29,12 +29,17 @@ pairs=$(printf '%s\n' "$listing" | sed -n -E \
 
 if [ -n "$pairs" ]; then
     # lsof -Fpn emits "p<pid>" for each process and "n<cwd>" for its cwd descriptor.
-    best=$(lsof -a -d cwd -p "$(printf '%s\n' "$pairs" | cut -d' ' -f1 | paste -sd, -)" -Fpn 2>/dev/null |
-        awk -v pwd="$PWD" -v map="$pairs" '
-            BEGIN {
-                n = split(map, lines, "\n")
-                for (i = 1; i <= n; i++)
-                    if (split(lines[i], f, " ") == 2) url[f[1]] = f[2]
+    # The pairs ride in on the same stream ahead of a "--" marker because BSD awk
+    # rejects a -v value containing a newline, which is every case with two routes up.
+    best=$( {
+        printf '%s\n--\n' "$pairs"
+        lsof -a -d cwd -p "$(printf '%s\n' "$pairs" | cut -d' ' -f1 | paste -sd, -)" -Fpn 2>/dev/null
+    } |
+        awk -v pwd="$PWD" '
+            !mapped {
+                if ($0 == "--") { mapped = 1; next }
+                if (NF == 2) url[$1] = $2
+                next
             }
             /^p/ { pid = substr($0, 2); next }
             /^n/ {

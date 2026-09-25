@@ -12,8 +12,15 @@
 #   This installs a root launchd daemon that listens on 0.0.0.0:<port> and forwards to
 #   127.0.0.1:<port>, where portless already is. The kernel routes loopback traffic to
 #   the more specific 127.0.0.1 bind, so requests from this machine reach portless
-#   directly and never traverse the forwarder — no loop. Requests from a phone, an
-#   Android emulator, or a teammate arrive on the LAN interface and get relayed.
+#   directly and never traverse the forwarder. Requests from a phone, an Android
+#   emulator, or a teammate arrive on the LAN interface and get relayed.
+#
+#   That no-loop argument holds only while portless is actually holding 127.0.0.1:<port>.
+#   With the proxy down this daemon owns the only listener on the port, so it relays into
+#   itself and forks a child per hop, until the system-wide process table is full and
+#   every fork on the machine fails — launchd included, which then cannot start the
+#   portless proxy either. max-children bounds that to a fixed number of stuck relays:
+#   the forwarder stops working, the machine keeps working.
 #
 #   TCP is forwarded verbatim, so the Host header survives and portless routes on it
 #   exactly as it does locally. Nothing here knows the machine's IP, so this is portable
@@ -27,6 +34,7 @@ set -e
 LABEL="in.te6.portless-lan-forward"
 PLIST="/Library/LaunchDaemons/$LABEL.plist"
 PORT=80
+MAX_CHILDREN=64
 
 usage() {
     echo "usage: portless-lan-forward [status|install|uninstall] [-p port]" >&2
@@ -86,7 +94,7 @@ case $cmd in
 	<key>ProgramArguments</key>
 	<array>
 		<string>$socat</string>
-		<string>TCP-LISTEN:$PORT,fork,reuseaddr</string>
+		<string>TCP-LISTEN:$PORT,fork,reuseaddr,max-children=$MAX_CHILDREN</string>
 		<string>TCP:127.0.0.1:$PORT</string>
 	</array>
 	<key>RunAtLoad</key>
