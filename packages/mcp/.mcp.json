@@ -23,6 +23,11 @@
       "command": "bunx",
       "args": ["-y", "firefox-devtools-mcp@latest", "--headless", "--enable-script"]
     },
+    "safari": {
+      "type": "stdio",
+      "command": "safaridriver",
+      "args": ["--mcp"]
+    },
     "ios-simulator": {
       "type": "stdio",
       "command": "bunx",

@@ -53,6 +53,7 @@
       "Bash(portless doctor:*)",
       "mcp__ide__getDiagnostics",
       "mcp__chrome-devtools",
+      "mcp__safari",
       "mcp__plugin_linear_linear__get_attachment",
       "mcp__plugin_linear_linear__get_document",
       "mcp__plugin_linear_linear__get_issue_status",
