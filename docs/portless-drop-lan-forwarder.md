@@ -55,17 +55,21 @@ Both must return `OK`, and the route must carry the issued domain. If the route 
 
 ### 3. Swap the setup over
 
+Add the new bind option to the plist that `packages/bin/.local/bin/portless-proxy-service` writes, then:
+
 ```sh
 sudo portless-lan-forward uninstall
-sudo portless service install --no-tls --tld "$PORTLESS_TLD" <new-bind-option>
+sudo portless-proxy-service install
 ```
+
+Don't reach for `portless service install` here — it pins the plist to a versioned Cellar node path, which is the breakage `portless-proxy-service` exists to avoid.
 
 ### 4. Clean up the repo
 
-- Delete `packages/bin/.local/bin/portless-lan-forward` and re-run `stow -R -t ~ bin` from `packages/` to drop the stale symlink.
+- Delete `packages/bin/.local/bin/portless-lan-forward` and re-run `stow -R bin` from `packages/` to drop the stale symlink.
 - Drop `brew "socat"` from `Brewfile` unless something else uses it (`grep -rn socat` first).
 - In `packages/fish/.config/fish/conf.d/portless.local.fish` and `portless.fish.example`, replace the "Deliberately NOT set: PORTLESS_LAN" comment with whatever the new option is.
-- Update the forwarder paragraph in `packages/claude/.claude/instructions/local-dev-server.md` and the portless section in `README.md`.
+- Update the forwarder paragraph in `packages/agents/.agents/rules/local-dev-server.md` and the portless section in `README.md`.
 - Delete this file.
 
 ### 5. Verify end to end
@@ -79,7 +83,7 @@ Open the printed URL on the Mac and on a phone on the same network. Both must lo
 ## Rollback
 
 ```sh
-sudo portless service install --no-tls --tld "$PORTLESS_TLD"   # LAN mode off again
+sudo portless-proxy-service install   # LAN mode off again
 sudo portless-lan-forward install
 ```
 
