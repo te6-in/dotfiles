@@ -1,0 +1,60 @@
+{
+  "description": "Codex desktop: recoverable deletion, lockfile protection, and Linear reminders.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/require-trash-over-rm.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "^(Bash|apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -B \"$HOME/.codex/hooks/block-lockfile-edits.py\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -B \"$HOME/.codex/hooks/require-linear-issue.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -B \"$HOME/.codex/hooks/linear-noissue-marker.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "^mcp__codex_apps__slack(?:_|__)slack_send_message$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -B \"$HOME/.codex/hooks/auto-approve-slack-self-dm.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
