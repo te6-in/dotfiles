@@ -12,8 +12,8 @@ description: >-
   which threads are still open and whether any of them names a real problem.
   Also "리뷰 코멘트 봐줘", "PR에 뭐라고 달렸어", "머지하려는데 코멘트 남았어".
   Reports only — it never edits code and never resolves threads.
-# No `agent:` pin: step 4 spawns subagents, which a read-only preset can't.
-# `allowed-tools` is what keeps this read-only.
+# Claude-specific pre-approval; this does not restrict available tools.
+# Leave its agent type unpinned so the coordinator can spawn investigators.
 context: fork
 allowed-tools:
   - "Bash(~/.agents/skills/review-comments/scripts/pr-comments.sh:*)"
@@ -31,7 +31,9 @@ allowed-tools:
 
 Review the comments on this branch's pull request and hand back the whole set in one report.
 
-This may run in a fork, where none of the raw material — the script's unfiltered dump, the code you read to adjudicate, the subagents' findings — crosses back. Only the report does, so read as much as the verdicts need and let the report carry all of it. It also means you can't ask anything; every judgement call below is yours, with the reasoning shown in the report.
+If you are the main agent, delegate this workflow to a report coordinator that can spawn the investigators in step 4. Pass the repository path and any PR identifier the user supplied; return its report without re-reading the raw material. If you are already that coordinator, execute the steps here. If the harness has no subagent facility, perform the investigation inline and disclose that limitation.
+
+The coordinator and investigators only read and report: do not edit code, post comments, or resolve review threads. In a subagent, only the final report goes back to the caller. Read as much as the verdicts need; make judgement calls from the evidence and show the reasoning in the report.
 
 ## Steps
 
@@ -41,12 +43,12 @@ This may run in a fork, where none of the raw material — the script's unfilter
    ~/.agents/skills/review-comments/scripts/pr-comments.sh
    ```
 
-   It resolves the current branch's pull request on its own; pass a number, a PR URL, or `owner/repo#number` to point it at a different one. Type that path literally — this file's `allowed-tools` pre-approves it exactly as written, so a rewritten path or an added pipe turns a silent call back into a permission prompt.
+   It resolves the current branch's pull request on its own; pass a number, a PR URL, or `owner/repo#number` to point it at a different one. Invoke the script directly at the path shown. Permission handling depends on the current harness and configuration; this skill does not grant access beyond them.
 
    Its output is the finished set, already formatted: **three** sources, not two — conversation comments, review summary bodies, and inline threads carrying their resolved state. The middle one is easy to miss and matters most here, because a review bot files its walkthrough as a review body, which neither the conversation nor the inline endpoint returns. Don't pipe the output anywhere, and don't re-fetch any of it with `gh`.
 2. The script filters nothing, by design — that judgement is yours. Drop the comments that ask nothing of anyone: deploy and branch-preview URLs, CI status, coverage reports, changeset reminders, and a review bot's own summary or walkthrough of the diff. Judge by whether the comment raises a question or requests a change, not by who wrote it — review bots post real feedback alongside their summaries.
 3. Keep the resolved ones. Resolution is a marker in the report, not a filter — a thread gets closed for plenty of reasons that have nothing to do with the point being answered.
-4. Group what's left by what it's actually about — several comments on one function, one design decision, or one repeated pattern belong in a single group. Send each group to its own subagent, all in parallel, running on the same model as this session. Hand it the comment text and the code it points at, and ask which verdict below fits, with the evidence behind it. The subagents investigate only; they don't edit.
+4. Group what's left by what it's actually about — several comments on one function, one design decision, or one repeated pattern belong in a single group. Send each group to its own subagent, all in parallel, running on the same model as this session. Hand it the comment text and the code it points at, and ask which verdict below fits, with the evidence behind it. The subagents investigate only; they don't edit. If the host cannot spawn investigators, including because the coordinator has reached a nesting limit, investigate every group in the coordinator and disclose that limit in the report.
 5. Report everything in a single message, under three headings:
    - **Real** — the problem is in the code as it stands.
    - **Already fixed** — it was real, and the current code no longer has it. Name the commit or the edit that closed it.

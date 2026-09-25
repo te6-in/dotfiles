@@ -3,16 +3,12 @@
 # summary bodies, and inline review threads with their resolved state — and
 # print them as a finished report.
 #
-# READ-ONLY, and that is load-bearing. This script is on the agent permission
-# allowlist by path, which means the `gh` calls inside it never reach
-# gh-read-guard.sh — the hook only sees the command the agent typed. Every
-# request here must therefore stay a GraphQL *query*. Never add a mutation,
-# never add `-X POST`, never add a write of any kind: it would run unguarded and
-# unprompted.
+# READ-ONLY, and that is load-bearing. A harness may approve this script by
+# path without inspecting the commands inside it. Every request here must
+# therefore stay a GraphQL query. Never add a mutation or another write.
 #
-# Output is deliberately final-form text, not JSON. A caller that has to pipe
-# this through `jq` rebuilds the multi-command pipeline the allowlist entry
-# exists to collapse, and the permission prompts come straight back.
+# Output is deliberately final-form text, not JSON, so callers can consume
+# the complete report from one command without rebuilding a shell pipeline.
 #
 # Known cap: the comments *inside* one review thread are fetched unpaginated at
 # 100. Every other connection paginates. A single thread past 100 replies would

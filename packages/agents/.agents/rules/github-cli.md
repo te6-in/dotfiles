@@ -8,13 +8,13 @@ glob:
 
 ## Reading github.com links
 
-When given a `github.com` URL, read it with `gh` — never `WebFetch`.
+When given a `github.com` URL, read it with `gh` — never a generic web-fetch tool.
 
 One gotcha worth calling out: PR inline review comments don't show up in `gh pr view --comments` (that's only the conversation tab). Use `gh api repos/OWNER/REPO/pulls/N/comments` instead.
 
 ## Pull Requests
 
-When creating a PR, use the repository's **default branch** as the base branch. Always look it up — the `Main branch` line in the session's git status is a guess, not the answer. One exception: when this branch sits on another branch that has its own open PR, base it on that branch instead — that's a stacked PR, and targeting the default branch would put the parent's commits in this diff.
+When creating a PR, use the repository's **default branch** as the base branch. Always look it up — session-provided branch hints are not authoritative. One exception: when this branch sits on another branch that has its own open PR, base it on that branch instead — that's a stacked PR, and targeting the default branch would put the parent's commits in this diff.
 
 ```sh
 git symbolic-ref --short refs/remotes/origin/HEAD   # → origin/dev
@@ -41,7 +41,7 @@ gh pr view --json number,title   # exits non-zero when the branch has no PR
 git log --oneline origin/<base>..HEAD
 ```
 
-When the title no longer covers the work, don't retitle silently — it notifies everyone on the PR. Ask the user, putting the proposed title in the question, then apply it with `gh pr edit <number> --title "..."`. Title only; the body stays empty, as above.
+When the title no longer covers the work, ask the user, putting the proposed title in the question, then apply it with `gh pr edit <number> --title "..."`. Title only; the body stays empty, as above.
 
 ## Merging Pull Requests
 

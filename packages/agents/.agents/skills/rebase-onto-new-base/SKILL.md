@@ -28,7 +28,7 @@ Two questions run through the whole procedure, and they are **not the same quest
 
 They collapse onto the same branch only in the force-push case. Step 1 settles `$BASE`, step 2 settles `$FORK`, and `--onto` takes them as separate arguments.
 
-`$ARGUMENTS`, if given, is `$BASE` — the branch to move onto.
+The target branch supplied with the skill invocation, if any, is `$BASE` — the branch to move onto.
 
 Run every step in order. Never push and never delete the backup automatically.
 
@@ -49,7 +49,7 @@ Run every step in order. Never push and never delete the backup automatically.
 
 Take the first of these that applies:
 
-- **`$ARGUMENTS` names a branch.** That's `$BASE`. This is the common path — prefer being told over detecting.
+- **The skill invocation supplies a branch.** That's `$BASE`. This is the common path — prefer being told over detecting.
 - **The user named a target in conversation** — a branch, a PR number, or a description of one ("the SDK bump PR"). Resolve it to a branch and use it.
 - **Neither.** Then this is most likely a force-push recovery or a base that moved under you, so propose the base FEATURE currently sits on (`$OLDBASE`, computed in step 2) — but ask, and put the retarget answers in the same question so they're reachable:
 
@@ -112,7 +112,7 @@ Then check the range before you touch anything:
 
 When conflicts keep landing in **regenerable files** (lockfiles, codegen output, build aggregates) and the repo has a regeneration command, a bundled script can drive the rest of the rebase: regenerate → verify markers gone → stage → continue, bailing out to manual handling the moment anything falls outside the pattern.
 
-Read [references/generated-file-conflict-loop.md](references/generated-file-conflict-loop.md) before reaching for it — it carries a mandatory warm-up (resolve at least one stop by hand first) plus the flag reference and exit codes. The script itself is at `${CLAUDE_SKILL_DIR}/scripts/regen-conflict-loop.sh`.
+Read [references/generated-file-conflict-loop.md](references/generated-file-conflict-loop.md) before reaching for it — it carries a mandatory warm-up (resolve at least one stop by hand first) plus the flag reference and exit codes. Resolve [scripts/regen-conflict-loop.sh](scripts/regen-conflict-loop.sh) relative to the directory containing this `SKILL.md` and use that resolved path when running it.
 
 ## 5. Verify and report
 
