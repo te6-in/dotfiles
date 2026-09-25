@@ -40,7 +40,14 @@ iOS has two; Android has three. Hold all three in your head, because each fails 
 Internalize these before starting — each one has produced a wrong conclusion in practice:
 
 1. **Only the foreground tab is drivable.** In a background tab `click` reports success but focuses nothing, and its `visualViewport` numbers are **stale** (a background tab read `innerHeight 837` while the foreground one read `809`). `document.visibilityState` is *not* a reliable discriminator — both tabs reported `"visible"`. Confirm which page is foreground the way step 4 describes, and never measure from a background tab.
-2. **`take_screenshot` is effectively broken here** — 1 success in 5 attempts, the rest timed out. Use `adb exec-out screencap -p`, which is also the **only** way to see the IME, the browser chrome, and system UI. CDP screenshots capture the page and nothing else, so they can't show you the keyboard you're debugging.
+2. **Screenshot with `adb exec-out screencap`, and pass `-d` on a multi-display device.** It is the **only** way to see the IME, the browser chrome, and system UI — `take_screenshot` captures the page and nothing else, so it can't show you the keyboard you're debugging (it has also timed out on 4 of 5 attempts on one setup, though CLI 1.10.1 against emulator Chrome 133 went 5 for 5). On a device with more than one display — the `resizable` emulator profile has two — `screencap` without `-d` prints a "Multiple displays were found" warning **onto stdout**, so `exec-out` writes a corrupt file that still exits 0. Resolve the ID of the default display once and pass it every time:
+
+   ```bash
+   DID=$(adb -s <serial> shell dumpsys display | sed -n 's/.*displayId 0,.*uniqueId "local:\([0-9]*\)".*/\1/p' | head -1)
+   adb -s <serial> exec-out screencap -d "$DID" -p > /tmp/shot.png   # then Read the png
+   ```
+
+   `screencap -d` takes the SurfaceFlinger ID, not the logical `displayId 0`; the `sed` maps one to the other. It works on single-display devices too, so there's no need to branch.
 3. **An emulator shows no soft keyboard by default** — it maps your Mac's hardware keyboard instead, so focusing an input changes nothing. `adb shell settings put secure show_ime_with_hard_keyboard 1` is a precondition for any keyboard work, not a tweak.
 4. **Don't forward to `9222` — you'd break iOS debugging silently.** The port number only has to agree between `adb forward` and `--browserUrl`, so it's free to move: default to **9333**, and give a second device 9334. `9222` is `ios-webkit-debug-proxy`'s default too, and the collision is one-directional and invisible. iwdp binds the wildcard `*:9222`; `adb forward` binds the specific `127.0.0.1:9222`; BSD sockets deliver to the specific bind. So **adb wins, Android keeps working perfectly, and every iOS request lands on your Android tabs** — both endpoints serve Chrome-shaped JSON, so nothing errors and the two page lists look alike. Avoid 9222 even on an iOS-free day: forwards **outlive the session that made them**, so a zombie `tcp:9222` from last week is enough to break someone's iPhone session today. Check what you're about to take with `lsof -nP -iTCP:<port> -sTCP:LISTEN`.
 5. **The CLI daemon is a singleton per user** unless you scope it. Plain `chrome-devtools start` **kills** whatever daemon was running, including one you had pointed at desktop Chrome. Always pass `--sessionId` (see step 3).
@@ -101,29 +108,30 @@ adb -s <serial> shell am start -a android.intent.action.VIEW \
 ### 3. Attach the CLI — always scoped
 
 ```bash
-chrome-devtools start --sessionId android --browserUrl http://127.0.0.1:9333
+chrome-devtools start --sessionId a0 --browserUrl http://127.0.0.1:9333
 ```
 
-`--sessionId` is undocumented (`hidden: true` in the CLI, found by reading the source) but load-bearing: it gives this daemon its own socket (`/tmp/chrome-devtools-mcp-android-<uid>.sock`), so an Android daemon and a desktop one coexist instead of evicting each other. Use a distinct id per device (`--sessionId phone --browserUrl http://127.0.0.1:9334`). **Pass the same `--sessionId` to every subsequent command.**
+`--sessionId` is undocumented (`hidden: true` in the CLI, found by reading the source) but load-bearing: it gives this daemon its own socket (`/tmp/chrome-devtools-mcp-a0-<uid>.sock`), so an Android daemon and a desktop one coexist instead of evicting each other. **The id may only contain hex digits and hyphens** (`/^[a-fA-F0-9-]+$/`) — a readable name like `android` is rejected with `Invalid sessionId: android`. Use a distinct id per device (`--sessionId a1 --browserUrl http://127.0.0.1:9334`). **Pass the same `--sessionId` to every subsequent command.**
 
-Stop it when you're done: `chrome-devtools stop --sessionId android`.
+Stop it when you're done: `chrome-devtools stop --sessionId a0`.
 
 ### 4. Select the page — it must be the foreground tab
 
 ```bash
-chrome-devtools list_pages --sessionId android
-chrome-devtools select_page 2 --sessionId android
+chrome-devtools list_pages --sessionId a0     # → 1: Example Domain (https://example.com/) [selected]
 ```
 
-The CLI's `[selected]` marker is **its own** notion and has nothing to do with which tab the device is showing. To find the real one, paint a marker from JS and look at a device screenshot — the tab whose marker appears is the foreground tab:
+**Every page-scoped command takes that page ID explicitly** — `select_page` doesn't set a default for them. Most take it as the first positional (`take_snapshot <pageId>`, `click <pageId> <uid>`, `fill <pageId> <uid> <value>`, `navigate_page <pageId> --type url --url <url>`); `evaluate_script` alone takes it as `--pageId <pageId>`, and without it fails with `specify either a pageId or a serviceWorkerId`. Starting the daemon with `--no-page-id-routing` doesn't get you out of this: `evaluate_script` then runs without one, but the positional commands still refuse to parse.
+
+The CLI's `[selected]` marker is **its own** notion and has nothing to do with which tab the device is showing. To find the real one, paint a marker from JS and look at a device screenshot (gotcha 2 for `$DID`) — the tab whose marker appears is the foreground tab:
 
 ```bash
-chrome-devtools evaluate_script --sessionId android '() => {
+chrome-devtools evaluate_script --sessionId a0 --pageId <pageId> '() => {
   const d = document.createElement("div"); d.className = "__cal";
   Object.assign(d.style, {position:"fixed",inset:"0 0 auto 0",height:"4px",background:"red",zIndex:2147483647});
   document.body.appendChild(d); return "marked";
 }'
-adb -s <serial> exec-out screencap -p > /tmp/shot.png   # then Read the png
+adb -s <serial> exec-out screencap -d "$DID" -p > /tmp/shot.png   # then Read the png
 ```
 
 That same marker gives you tap calibration for free — see step 6. Remove it (`document.querySelectorAll(".__cal").forEach(n => n.remove())`) before measuring anything.
@@ -133,7 +141,7 @@ That same marker gives you tap calibration for free — see step 6. Remove it (`
 `evaluate_script` is the reliable workhorse (5/5 in testing). Measure several things per round-trip and return JSON:
 
 ```bash
-chrome-devtools evaluate_script --sessionId android '() => {
+chrome-devtools evaluate_script --sessionId a0 --pageId <pageId> '() => {
   const el = document.querySelector("YOUR_SELECTOR");
   const r = el.getBoundingClientRect(), vv = visualViewport;
   return {
@@ -151,8 +159,8 @@ For keyboard work always report `innerHeight`, `visualViewport.height` **and** `
 Prefer the a11y tree — no pixel math, and it raises the real IME:
 
 ```bash
-chrome-devtools take_snapshot --sessionId android      # → uid=3_0 textbox "Name"
-chrome-devtools click 3_0 --sessionId android          # focuses AND raises the soft keyboard
+chrome-devtools take_snapshot <pageId> --sessionId a0       # → uid=3_0 textbox "Name"
+chrome-devtools click <pageId> 3_0 --sessionId a0           # focuses AND raises the soft keyboard
 adb -s <serial> shell input keyevent 4                 # back: dismisses the IME only
 ```
 

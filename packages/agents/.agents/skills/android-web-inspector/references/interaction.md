@@ -12,11 +12,11 @@ Two input paths. Reach for the first; drop to the second only when it can't reac
 ## Path 1 — a11y clicks (default)
 
 ```bash
-chrome-devtools take_snapshot --sessionId android
+chrome-devtools take_snapshot <pageId> --sessionId a0
 # uid=3_0 textbox "Name"
 # uid=3_1 button "제출"
-chrome-devtools click 3_0 --sessionId android
-chrome-devtools fill 3_0 "hello" --sessionId android
+chrome-devtools click <pageId> 3_0 --sessionId a0
+chrome-devtools fill <pageId> 3_0 "hello" --sessionId a0
 ```
 
 Measured: clicking a foreground-tab `<input>` focused it and took `visualViewport.height` 809 → 461. That is a real IME raise, so the whole keyboard-bug workflow works without touching pixel coordinates.
@@ -41,7 +41,7 @@ adb -s <serial> shell input keyevent 66       # Enter
 Confirm the keyboard's actual state from the page rather than from a screenshot:
 
 ```bash
-chrome-devtools evaluate_script --sessionId android \
+chrome-devtools evaluate_script --sessionId a0 --pageId <pageId> \
   '() => ({innerH: innerHeight, vvH: Math.round(visualViewport.height), vvTop: Math.round(visualViewport.offsetTop)})'
 ```
 
@@ -65,7 +65,7 @@ deviceY = topOffset + (cssY - visualViewport.offsetTop) * dpr
 Paint bars at known CSS offsets, screenshot, read where they landed:
 
 ```bash
-chrome-devtools evaluate_script --sessionId android '() => {
+chrome-devtools evaluate_script --sessionId a0 --pageId <pageId> '() => {
   document.querySelectorAll(".__cal").forEach(n => n.remove());
   const mk = (top, color) => { const d = document.createElement("div"); d.className = "__cal";
     Object.assign(d.style, {position:"fixed",left:"0",top:top+"px",width:"100%",height:"4px",
@@ -73,7 +73,7 @@ chrome-devtools evaluate_script --sessionId android '() => {
   mk(0,"red"); mk(200,"lime"); mk(400,"blue");
   return {dpr: devicePixelRatio};
 }'
-adb -s <serial> exec-out screencap -p > /tmp/cal.png     # then Read the png
+adb -s <serial> exec-out screencap -d "$DID" -p > /tmp/cal.png     # then Read the png
 ```
 
 Read the three bars' rows off the image. Then:
@@ -89,7 +89,7 @@ Three bars, not one: the third is what catches a wrong reading, and the check is
 **Remove the bars before measuring anything** — they're `position: fixed` at max z-index and will corrupt hit-testing and layout reads:
 
 ```bash
-chrome-devtools evaluate_script --sessionId android \
+chrome-devtools evaluate_script --sessionId a0 --pageId <pageId> \
   '() => { document.querySelectorAll(".__cal").forEach(n => n.remove()); return "cleaned"; }'
 ```
 
@@ -105,7 +105,7 @@ adb -s <serial> shell input swipe <x1> <y1> <x2> <y2> <durationMs>   # 300ms rea
 Before trusting a tap, verify the target is actually on top — an error overlay or a modal backdrop will silently eat it:
 
 ```bash
-chrome-devtools evaluate_script --sessionId android '() => {
+chrome-devtools evaluate_script --sessionId a0 --pageId <pageId> '() => {
   const el = document.querySelector("YOUR_SELECTOR"), r = el.getBoundingClientRect();
   const hit = document.elementFromPoint(r.left + r.width/2, r.top + r.height/2);
   return {onTop: hit === el, hit: hit?.tagName + (hit?.id ? "#" + hit.id : "")};
@@ -119,16 +119,15 @@ Emulator latency is real: `input keyevent`/`input tap` has been seen taking seve
 ## Screenshots
 
 ```bash
-adb -s <serial> exec-out screencap -p > /tmp/shot.png   # then Read the png
+adb -s <serial> exec-out screencap -d "$DID" -p > /tmp/shot.png   # then Read the png
 ```
 
-This is the screenshot path. It captures the **whole screen** — page, browser chrome, the IME, system bars — which is exactly what keyboard and viewport bugs need to show.
+This is the screenshot path. It captures the **whole screen** — page, browser chrome, the IME, system bars — which is exactly what keyboard and viewport bugs need to show. `$DID` is the default display's ID; without `-d`, a multi-display device corrupts the file (SKILL.md gotcha 2 has the lookup).
 
-`chrome-devtools take_screenshot` is not a substitute: it timed out on 4 of 5 attempts against an Android target, and even when it succeeds it captures only the page, so the keyboard you're debugging is invisible in it.
+`chrome-devtools take_screenshot <pageId>` is not a substitute: it captures only the page, so the keyboard you're debugging is invisible in it.
 
 ## Things that quietly produce wrong numbers
 
 - **Measuring a background tab.** Its viewport values are stale (one read `innerHeight 837` while the foreground tab read `809`). `document.visibilityState` reported `"visible"` for both, so it can't be used to tell them apart.
 - **HMR ghosts.** After hot-reloading, a stale detached node can still answer `querySelector`, giving numbers that don't match what's on screen. Hard-reload before trusting a measurement that looks impossible.
 - **Mid-animation reads.** Chrome pans the visual viewport over ~150ms and briefly reports absurd values (`innerHeight: 1145` on an 809px-tall viewport has been observed). Sample the settled state, and when you do want the transient, capture a series with timestamps rather than one point.
-- **`navigate_page` CLI arg parsing.** `chrome-devtools navigate_page "<url>" --type url` binds the URL to the `type` positional and errors out. Navigate with `evaluate_script '() => { location.href = "..." }'` or `adb shell am start` instead.

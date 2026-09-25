@@ -43,7 +43,7 @@ The CLI does the browser half well. This skill exists for the half it can't see:
 | Device reaching your dev server | ❌ | ✅ `adb reverse` / `10.0.2.2` |
 | Showing the soft keyboard on an emulator | ❌ | ✅ `show_ime_with_hard_keyboard` |
 | Dismissing the IME without touching the page | ❌ | ✅ `keyevent 4` |
-| Screenshot including the IME and browser chrome | ❌ (and unreliable on Android) | ✅ `exec-out screencap` |
+| Screenshot including the IME and browser chrome | ❌ page only | ✅ `exec-out screencap -d` |
 | Browser chrome, system dialogs, gestures | ❌ | ✅ `input tap` / `input swipe` |
 
 ## Why iOS is a separate track

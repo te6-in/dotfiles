@@ -145,7 +145,7 @@ adb -s emulator-5554 forward tcp:9333 localabstract:chrome_devtools_remote
 adb -s <serial>      forward tcp:9334 localabstract:chrome_devtools_remote
 ```
 
-then one CLI daemon per device, each with its own `--sessionId` (`emulator`, `phone`, …).
+then one CLI daemon per device, each with its own `--sessionId` (`a0`, `a1`, … — hex digits and hyphens only).
 
 Other debug bridges claim ports in this range too, so check the one you picked is genuinely free before forwarding — `adb forward` will happily leave you talking to the wrong listener:
 
@@ -189,7 +189,7 @@ A WebView is inspectable only if the app called `WebView.setWebContentsDebugging
 ```bash
 adb -s <serial> shell 'cat /proc/net/unix | grep webview_devtools'
 adb -s <serial> forward tcp:9335 localabstract:webview_devtools_remote_12345
-chrome-devtools start --sessionId appwv --browserUrl http://127.0.0.1:9335
+chrome-devtools start --sessionId a5 --browserUrl http://127.0.0.1:9335
 ```
 
 From there it behaves like Chrome: `list_pages`, `evaluate_script`, `take_snapshot`. Two differences worth expecting:

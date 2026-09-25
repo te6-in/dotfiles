@@ -58,15 +58,23 @@ Full mechanism in `references/connect.md`. The forward may not even be from this
 
 Seen intermittently against Android targets. Distinguish two cases:
 
-- **`take_screenshot`** — expected. It fails most of the time here. Use `adb exec-out screencap -p` instead; don't retry into it.
+- **`take_screenshot`** — known to time out on some setups. Use `adb exec-out screencap` instead; don't retry into it.
 - **Anything else** — usually the page is mid-navigation or stuck behind a dev-server error overlay, and the daemon is waiting for stability. Retry once, then check what the page is actually showing with a device screenshot.
 
 If the daemon itself is wedged:
 
 ```bash
-chrome-devtools stop --sessionId android
-chrome-devtools start --sessionId android --browserUrl http://127.0.0.1:9333
+chrome-devtools stop --sessionId a0
+chrome-devtools start --sessionId a0 --browserUrl http://127.0.0.1:9333
 ```
+
+## `Invalid sessionId`, `specify either a pageId or a serviceWorkerId`, or `Not enough non-option arguments`
+
+The CLI accepts only hex digits and hyphens in `--sessionId`, and requires a page ID on every page-scoped command. Both are covered in SKILL.md steps 3 and 4.
+
+## `screencap` output isn't a valid PNG
+
+The device has more than one display, and `screencap` wrote its "Multiple displays were found" warning into the image stream. Pass `-d` — SKILL.md gotcha 2.
 
 ## The desktop chrome-devtools daemon disappeared
 
