@@ -404,6 +404,9 @@
   "language": "the language of the user's most recent message",
   "feedbackSurveyRate": 0,
   "feedbackDrafts": "off",
+  "attribution": {
+    "sessionUrl": false
+  },
   "spellcheck": {
     "enabled": true,
     "checker": "aspell",
