@@ -16,12 +16,13 @@ vertical_scroll_sensitivity = 14
 app_icon = "openlogi"
 auto_download_assets = true
 asset_source = "automatic"
-thumbwheel_sensitivity = 40
+thumbwheel_sensitivity = 30
 appearance = "system"
 ui_scale = "small"
 device_view_mode = "list"
 theme_dark = "OpenLogi Dark"
 ui_radius = 12
+mouse_profile_target = "focused"
 
 [devices."serial:2549zau80d68"]
 thumbwheel_sensitivity = 40
@@ -179,5 +180,9 @@ ThumbwheelScrollDown.CustomShortcut = "Cmd+-" # TODO: should do a trackpad zoom
 [devices."serial:2549zau80d68".per_app_bindings."com.apple.dt.Devices"] # Device Hub (Formerly Simulator)
 Back.CustomShortcut = "Cmd+Ctrl+Shift+H"
 Forward.CustomShortcut = "Cmd+Shift+H"
+
+[devices."serial:2549zau80d68".per_app_bindings."com.tinyspeck.slackmacgap"]
+ThumbwheelScrollUp.CustomShortcut = "Cmd+Shift+M"
+ThumbwheelScrollDown.CustomShortcut = "Cmd+Shift+T"
 
 [keyboard]
