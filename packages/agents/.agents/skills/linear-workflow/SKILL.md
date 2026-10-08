@@ -96,11 +96,11 @@ Every transition and every link below lands on **the issue this session's work b
 
 - Starting work → **In Progress**
 - PR opened, draft or not → **In Review**. A draft counts; don't wait for it to be marked ready.
-- PR merged → **Done**
+- PR merged → **Done**, unless the change still waits on a release step after the merge — a package publish, an app release — and the issue's team has a **Ready for Release** state; then **Ready for Release**, and the person who ships the release moves it to **Done**. A change the merge alone puts live, like a docs page deployed on merge, goes to **Done**. Check the team's states with `list_issue_statuses`, and read the repo's release setup (changesets, publish workflows) to tell which case the PR is; when it touches both kinds, or you can't tell, ask the user.
 
-No kind of issue is exempt from these three states. A sub-issue runs them like anything else — it does not go **Done** early just because the commit implementing it has landed.
+No kind of issue is exempt from these three states. A sub-issue runs them like anything else — it does not reach its merged state early just because the commit implementing it has landed.
 
-**Arriving with the work already done.** The three states assume work is starting. Every other entry point — a PR event, the `comment` skill, recovery after the identification checkpoint slipped — reaches this list with some or all of the work already finished. Set the state the work is actually in, and don't walk the issue through the ones it skipped: a merged PR's issue goes straight to **Done**, not In Progress and then twice more.
+**Arriving with the work already done.** The three states assume work is starting. Every other entry point — a PR event, the `comment` skill, recovery after the identification checkpoint slipped — reaches this list with some or all of the work already finished. Set the state the work is actually in, and don't walk the issue through the ones it skipped: a merged PR's issue goes straight to its merged state, not In Progress and then twice more.
 
 Attach the PR URL to the anchored issue via `save_issue` with `links: [{ url, title }]`, the first moment you know both — usually at PR creation, later if the issue only got identified afterwards. It surfaces in that issue's sidebar, and it is the only record tying the two together.
 
@@ -110,7 +110,7 @@ Get the target right the first time: the source integration appends `links`, and
 
 Before transitioning an issue, check whether anything hangs off it: `list_issues` with `parentId` set to that issue and `includeArchived: false`. That flag defaults to **true**, and an issue whose sub-issues were all archived or cancelled would otherwise read as shared forever.
 
-**No sub-issues** — effectively solo work. Own the full lifecycle, **Done** included, and move it without asking.
+**No sub-issues** — effectively solo work. Own the full lifecycle, the merged state included, and move it without asking.
 
 **Has sub-issues** — other people's work sits underneath, and the status is a signal they read. Ask using the available question flow before every transition on that issue, **In Progress** and **In Review** included, not just **Done**.
 
