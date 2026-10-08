@@ -17,6 +17,8 @@ abbr --add dock-unlock --description="Unfreeze the Dock's contents" "defaults wr
 abbr --add c --description="Open the current directory in VS Code" "code ."
 abbr --add f --description="Open the current directory in Fork" "fork ."
 
+abbr --add g --description="Run git" "git"
+
 abbr --add cc --description="Start Claude Code" "claude"
 abbr --add ccr --description="Resume a Claude Code session" "claude --resume"
 
