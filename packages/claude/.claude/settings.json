@@ -405,8 +405,10 @@
   "feedbackSurveyRate": 0,
   "feedbackDrafts": "off",
   "attribution": {
+    "pr": "",
     "sessionUrl": false
   },
+  "cleanupPeriodDays": 3650,
   "spellcheck": {
     "enabled": true,
     "checker": "aspell",
