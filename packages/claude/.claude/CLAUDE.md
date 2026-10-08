@@ -6,7 +6,8 @@ imported here as well, or they land in context twice.
 
 The files that stay in instructions/ are the ones that name a Claude Code tool or setting
 outright: asking-the-user (AskUserQuestion), notifications (PushNotification),
-local-references (permissions.additionalDirectories), notion (Notion MCP), model-name.
+local-references (permissions.additionalDirectories), notion (Notion MCP), model-name,
+showing-images (the images mod's show_image tool).
 They are the adapter layer — the neutral rules say "ask the user", these say which tool
 that means here.
 -->
@@ -19,6 +20,7 @@ that means here.
 
 @instructions/asking-the-user.md
 @instructions/notifications.md
+@instructions/showing-images.md
 
 # Shell & execution
 

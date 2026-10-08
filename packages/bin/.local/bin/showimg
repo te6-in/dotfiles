@@ -1,0 +1,132 @@
+#!/bin/sh
+# showimg — show images to the user in a split Orca pane. No-op outside Orca.
+#
+# usage: showimg FILE...
+#
+# why a split pane:
+#   An agent's shell is not the user's terminal: the harness captures its output and
+#   strips the ESC byte, so an inline-image sequence never reaches the screen. A pane
+#   Orca spawns has a real terminal, so this splits one off and draws there.
+#
+# why the DA1 wait:
+#   Orca attaches its image addon after the new pane first paints, and an image
+#   sequence that arrives before then is dropped without a trace. Orca adds `;4` to its
+#   DA1 reply only once the addon is attached, so the pane polls for that instead of
+#   sleeping.
+
+set -eu
+
+self=${0##*/}
+MAX_EDGE=1600
+
+die() { printf '%s: %s\n' "$self" "$1" >&2; exit 1; }
+
+current_terminal() {
+    terminals=$(orca terminal list --json) || return 1
+    printf '%s' "$terminals" | jq -er --arg pane "$ORCA_PANE_KEY" '
+        [.result.terminals[] | select(.tabId + ":" + .leafId == $pane)]
+        | if length == 1 then .[0].handle else error("calling Orca pane not found") end
+    '
+}
+
+inline_images_ready() {
+    old=$(stty -g)
+    stty -echo -icanon min 0 time 3
+    printf '\033[c'
+    reply=$(dd bs=64 count=1 2>/dev/null || true)
+    stty "$old"
+    case $reply in *';4;'* | *';4c'*) return 0 ;; esac
+    return 1
+}
+
+wait_for_key() {
+    old=$(stty -g)
+    # Drain terminal replies that are still in flight, so they don't count as a key.
+    stty -echo -icanon min 0 time 1
+    while [ -n "$(dd bs=256 count=1 2>/dev/null)" ]; do :; done
+    stty -echo -icanon min 1 time 0
+    dd bs=1 count=1 >/dev/null 2>&1 || true
+    stty "$old"
+}
+
+# Rewrites anything the addon can't take as-is (HEIC, TIFF, oversized) into a PNG.
+displayable() {
+    f=$1
+    w=$(sips -g pixelWidth "$f" 2>/dev/null | awk '/pixelWidth/ { print $2 }')
+    h=$(sips -g pixelHeight "$f" 2>/dev/null | awk '/pixelHeight/ { print $2 }')
+    case $f in
+        *.[pP][nN][gG] | *.[jJ][pP][gG] | *.[jJ][pP][eE][gG] | *.[gG][iI][fF])
+            if [ "${w:-0}" -le "$MAX_EDGE" ] && [ "${h:-0}" -le "$MAX_EDGE" ]; then
+                printf '%s' "$f"
+                return
+            fi
+            ;;
+    esac
+    out=$(mktemp "${TMPDIR:-/tmp}/showimg.XXXXXX")
+    sips -s format png -Z "$MAX_EDGE" "$f" --out "$out" >/dev/null 2>&1 || { rm -f "$out"; return 1; }
+    printf '%s' "$out"
+}
+
+pane() {
+    job=$1
+    i=0
+    while [ "$i" -lt 30 ] && ! inline_images_ready; do i=$((i + 1)); done
+    if [ "$i" -ge 30 ]; then
+        printf '\033[33minline images are off (Settings > Terminal > Inline Images)\033[0m\n'
+    fi
+
+    while IFS= read -r f; do
+        printf '\n\033[1m%s\033[0m\n' "${f##*/}"
+        if ! img=$(displayable "$f"); then
+            printf '\033[31mcannot decode %s\033[0m\n' "$f"
+            continue
+        fi
+        printf '\033]1337;File=inline=1;preserveAspectRatio=1;size=%s:%s\a\n' \
+            "$(wc -c < "$img" | tr -d ' ')" "$(base64 < "$img" | tr -d '\n')"
+        [ "$img" = "$f" ] || rm -f "$img"
+    done < "$job"
+    rm -f "$job"
+
+    printf '\n\033[2mpress any key to close\033[0m'
+    wait_for_key
+    terminal=$(current_terminal) || exit 1
+    orca terminal close --terminal "$terminal" >/dev/null 2>&1 || exit 0
+}
+
+if [ "${1-}" = --pane ]; then
+    pane "$2"
+    exit 0
+fi
+
+[ $# -gt 0 ] || { printf 'usage: %s FILE...\n' "$self" >&2; exit 2; }
+
+for f in "$@"; do
+    [ -f "$f" ] || die "no such file: $f"
+done
+
+if [ -z "${ORCA_PANE_KEY:-}" ] || ! command -v orca >/dev/null 2>&1; then
+    printf '%s: not in Orca, nothing shown\n' "$self" >&2
+    exit 0
+fi
+
+command -v jq >/dev/null 2>&1 || die "jq is required"
+terminal=$(current_terminal) || die "cannot find the calling Orca pane"
+
+job=$(mktemp "${TMPDIR:-/tmp}/showimg-job.XXXXXX")
+for f in "$@"; do
+    case $f in
+        /*) printf '%s\n' "$f" ;;
+        *) printf '%s/%s\n' "$PWD" "$f" ;;
+    esac
+done > "$job"
+
+case $0 in
+    /*) bin=$0 ;;
+    */*) bin=$PWD/$0 ;;
+    *) bin=$(command -v "$0") ;;
+esac
+
+if ! out=$(orca terminal split --terminal "$terminal" --direction vertical --command "$bin --pane '$job'" 2>&1); then
+    rm -f "$job"
+    die "orca terminal split failed: $out"
+fi

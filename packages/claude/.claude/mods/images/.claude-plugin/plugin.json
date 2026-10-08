@@ -1,0 +1,7 @@
+{
+  "name": "images",
+  "version": "0.1.0",
+  "description": "Show images in a terminal pane: /img and a show_image tool for kitty and Ghostty, with a session history",
+  "author": { "name": "Joo Chanhwi" },
+  "types": "./types/index.d.ts"
+}
