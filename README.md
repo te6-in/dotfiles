@@ -31,6 +31,14 @@ Decisions, state changes, and findings move out of the private chat onto surface
 - `/notion` promotes durable findings to a default Notion page.
 - Slack self-DMs are pre-approved for quick notes.
 
+## Codex config
+
+`packages/codex/` supplies Codex copies of the harness-specific skills in `packages/claude/` and harness-specific instructions. Stow it into the home directory alongside `agents`. Its global `AGENTS.md` links to `packages/codex/.codex/AGENTS.md`, which includes the full text of the shared rules and all Codex-specific instructions. Codex loads this body at startup without asking the model to read another instruction file. It does not discover the Markdown rules directory or filter it by `paths` itself.
+
+After editing the rule or Codex instruction sources, run `python3 scripts/sync-codex-instructions.py` to regenerate `AGENTS.md`; `--check` detects a stale snapshot. No `developer_instructions` loader is needed. Existing Codex model and app preferences are preserved.
+
+`claude-recall` and `claude-recap` live under `.codex/skills/` for Codex-only discovery: the former searches local Claude sessions and returns resume commands, while the latter reconstructs a known Claude session's dialogue into the current Codex conversation. The Claude originals remain separate. After an app restart, Slack self-DM approval and prompting for other destinations were verified. GitHub human-approval routing remains unregistered. The adapter uses direnv per command when project environment is needed and the existing notify CLI for explicit notification requests.
+
 ## One set of instructions, two agents
 
 Anything that holds regardless of which agent is running — skills and standing instructions alike — lives once in `packages/agents/` and is written harness-neutral: it says "ask the user", not the name of one harness's prompt tool. The package projects that single copy into each agent's expected path with symlinks, so both read the same file and an edit lands everywhere at once:
@@ -60,7 +68,7 @@ Write a `description` that says what the file *governs*, not what it says, so it
 
 Both agents also honor `disable-model-invocation`, so a `/`-only skill stays `/`-only in both.
 
-What can't be neutral stays in `packages/claude/`. The skills: `recall` and `recap` parse Claude Code's own JSONL transcripts, `linear-read-issue` depends on forking into a subagent, and the Linear/Notion ones need MCP servers only Claude Code has. The instructions: `asking-the-user`, `notifications`, `local-references`, `notion`, and `model-name` each name a Claude Code tool or setting outright. Those five are the adapter layer — the neutral rules say "ask the user", these say which tool that means here. They stay `@`-imported from `CLAUDE.md`; the neutral ones must **not** be, or they load twice.
+Harness-specific originals stay in `packages/claude/`, with Codex equivalents in `packages/codex/`. The Claude session skills have Codex-only copies named `claude-recall` and `claude-recap`. Both harnesses have adapters for `asking-the-user`, `notifications`, `local-references`, `notion`, and `model-name`. These translate shared intent into the tools and settings each host provides. Claude imports its five adapters from `CLAUDE.md`; Codex includes their complete bodies and its shell/workflow instructions in the generated global `AGENTS.md`. The neutral rules must not also be imported from `CLAUDE.md`, or they load twice there.
 
 Gotchas worth remembering, all found the hard way:
 
