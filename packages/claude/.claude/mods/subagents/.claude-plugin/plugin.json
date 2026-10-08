@@ -1,0 +1,7 @@
+{
+  "name": "subagents",
+  "version": "0.1.0",
+  "description": "Live pane of running subagents: their model, tool calls and streamed text, with a one-line band when the pane is hidden",
+  "author": { "name": "Joo Chanhwi" },
+  "types": "./types/index.d.ts"
+}
